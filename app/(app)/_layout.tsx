@@ -58,7 +58,7 @@ const LayoutGroup = () => {
   return (
     <>
       {/* Header */}
-      <View className="h-14 flex-row items-center justify-between px-4 bg-[#343541] border-b border-gray-800">
+      <View className="h-14 flex-row items-center justify-between px-4 bg-[#343541] border-b border-gray-600">
         <TouchableOpacity 
           onPress={toggleSidebar}
           className="w-10 h-10 items-center justify-center active:opacity-70"
@@ -74,11 +74,11 @@ const LayoutGroup = () => {
       </View>
 
       {/* Content */}
-      <View className="flex-1 bg-[#1A1A1A]">
+      <View className="flex-1 bg-[#343541]">
         <Stack 
           screenOptions={{ 
             headerShown: false,
-            contentStyle: { backgroundColor: '#1A1A1A' },
+            contentStyle: { backgroundColor: '#343541' },
             animation: 'none',
           }}
         />
@@ -86,11 +86,11 @@ const LayoutGroup = () => {
 
       {/* Sidebar */}
       <Animated.View
-        className="absolute left-0 top-0 h-full w-[280px] bg-[#1E1E1E] border-r-2 border-gray-800 shadow-xl shadow-black/50"
+        className="absolute left-0 top-0 h-full w-[280px] bg-[#40414F] border-r-2 border-gray-600 shadow-xl shadow-black/50"
         style={{ transform: [{ translateX: slideAnim }] }}
       >
         <SafeAreaView className="flex-1">
-          <View className="flex-row items-center justify-between p-4 border-b border-gray-800">
+          <View className="flex-row items-center justify-between p-4 border-b border-gray-600">
             <Text className="text-lg font-semibold text-white">Menu</Text>
             <TouchableOpacity 
               onPress={toggleSidebar}
@@ -116,7 +116,7 @@ const LayoutGroup = () => {
             ))}
           </View>
 
-          <View className="p-2 border-t border-gray-800">
+          <View className="p-2 border-t border-gray-600">
             <TouchableOpacity 
               className="flex-row items-center px-4 py-3.5 rounded-lg active:bg-red-500/10"
               onPress={() => setShowModal(true)}
@@ -138,7 +138,7 @@ const LayoutGroup = () => {
         style={{ margin: 0 }}
       >
         <View className="flex-1 items-center justify-center px-4">
-          <View className="w-[90%] max-w-md rounded-2xl bg-[#1E1E1E] p-6 border-2 border-gray-800 shadow-2xl shadow-black/50">
+          <View className="w-[90%] max-w-md rounded-2xl bg-[#40414F] p-6 border-2 border-gray-600 shadow-2xl shadow-black/50">
             <View className="pb-4 mb-4">
               <Text className="text-xl font-bold text-white text-center">Confirm Sign Out</Text>
             </View>
@@ -148,14 +148,14 @@ const LayoutGroup = () => {
             <View className="flex-row justify-center gap-4">
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
-                className="flex-1 px-6 py-3.5 border border-gray-700 rounded-full active:bg-gray-800"
+                className="flex-1 px-6 py-3.5 border border-gray-600 rounded-full active:bg-gray-800"
               >
                 <Text className="text-white text-base font-medium text-center">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={confirmSignOut}
                 disabled={loading}
-                className="flex-1 px-6 py-4 rounded-full bg-red-500 active:bg-red-600 ml-2" 
+                className="flex-1 px-6 py-3.5 rounded-full bg-red-500 active:bg-red-600" 
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
