@@ -339,7 +339,7 @@ const SignUpScreen: React.FC = () => {
           {[1, 2, 3, 4, 5].map((index) => (
             <View
               key={index}
-              className={`h-1 flex-1 rounded-full ${index <= passwordStrength.score
+              className={`h-1.5 flex-1 rounded-full ${index <= passwordStrength.score
                   ? getStrengthColor(passwordStrength.score)
                   : 'bg-gray-600'
                 }`}
@@ -347,17 +347,24 @@ const SignUpScreen: React.FC = () => {
           ))}
         </View>
         {password.length > 0 && (
-          <View className="mt-2">
-            <Text className={`text-sm mb-1 ${getTextColor(passwordStrength.score)}`}>
-              {getStrengthText(passwordStrength.score)}
+          <View className="mt-3">
+            <Text className={`text-sm font-medium mb-1.5 ${getTextColor(passwordStrength.score)}`}>
+              {getStrengthText(passwordStrength.score)} Password
             </Text>
-            {Object.entries(passwordStrength.requirements).map(([key, met]) => (
-              <Text
-                key={key}
-                className={`text-sm ${met ? 'text-green-500' : 'text-gray-400'}`}>
-                {`• ${key.charAt(0).toUpperCase() + key.slice(1)} ${met ? '✓' : ''}`}
-              </Text>
-            ))}
+            <View className="flex-row flex-wrap gap-x-4 gap-y-1">
+              {Object.entries(passwordStrength.requirements).map(([key, met]) => (
+                <View key={key} className="flex-row items-center">
+                  <FontAwesome
+                    name={met ? 'check-circle' : 'circle-o'}
+                    size={12}
+                    color={met ? '#10a37f' : '#4b5563'}
+                  />
+                  <Text className={`text-sm ml-1.5 ${met ? 'text-green-500' : 'text-gray-400'}`}>
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -367,12 +374,14 @@ const SignUpScreen: React.FC = () => {
   // Update email input with ref and keyboard handling
   const renderEmailInput = () => (
     <View>
-      <Text className="mb-2 font-medium text-gray-300">Email address</Text>
+      <Text className="mb-2.5 font-medium text-gray-300">Email address</Text>
       <View className="relative">
         <TextInput
           ref={emailInputRef}
-          className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 text-white ${(!isEmailValid && isSubmitAttempted) || emailExists ? 'border-red-500' : 'border-gray-600'
-            }`}
+          className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 text-white text-base ${
+            (!isEmailValid && isSubmitAttempted) || emailExists 
+            ? 'border-red-500' : 'border-gray-600'
+          }`}
           autoCapitalize="none"
           value={emailAddress}
           placeholder="Enter email"
@@ -382,7 +391,7 @@ const SignUpScreen: React.FC = () => {
           returnKeyType="next"
           onSubmitEditing={() => passwordInputRef.current?.focus()}
         />
-        <View className="absolute left-4 top-4">
+        <View className="absolute left-4 top-[17px]">
           <FontAwesome name="envelope" size={20} color="#9ca3af" />
         </View>
         {isCheckingEmail && (
@@ -412,7 +421,8 @@ const SignUpScreen: React.FC = () => {
           Verify Email
         </Text>
         <Text className="text-center text-base text-gray-300">
-          Please enter the verification code sent to {emailAddress}
+          We've sent a 6-digit code to{"\n"}
+          <Text className="font-semibold text-gray-200">{emailAddress}</Text>
         </Text>
       </View>
 
@@ -424,7 +434,7 @@ const SignUpScreen: React.FC = () => {
           theme={{
             containerStyle: {
               width: '100%',
-              gap: 12,
+              gap: 10,
             },
             inputsContainerStyle: {
               marginBottom: 16,
@@ -435,7 +445,7 @@ const SignUpScreen: React.FC = () => {
               borderRadius: 12,
               backgroundColor: 'transparent',
               height: 56,
-              width: 45,
+              width: 48,
             },
             pinCodeTextStyle: {
               color: '#ffffff',
@@ -444,6 +454,10 @@ const SignUpScreen: React.FC = () => {
             },
             focusStickStyle: {
               backgroundColor: '#10a37f',
+              width: 4,
+            },
+            focusedPinCodeContainerStyle: {
+              borderColor: '#10a37f',
             },
           }}
         />
@@ -687,27 +701,26 @@ const SignUpScreen: React.FC = () => {
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              <View className="pt-12 px-4 mb-4">
+              <View className="pt-5 px-4 mb-2">
                 <TouchableOpacity 
                   onPress={handleBack}
-                  className="flex-row items-center p-2"
+                  className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12"
                 >
-                  <FontAwesome name="arrow-left" size={16} color="#9ca3af" />
-                  <Text className="ml-2 text-gray-300 text-base">Back</Text>
+                  <FontAwesome name="arrow-left" size={18} color="#9ca3af" />
                 </TouchableOpacity>
               </View>
 
-              <View className="flex-1 justify-center py-6">
+              <View className="flex-1 justify-center py-4">
                 {pendingVerification ? (
                   renderVerificationScreen()
                 ) : (
                   <>
                     <View className="mb-8 px-8">
                       <Text className="mb-2 text-center text-3xl font-bold text-white">
-                        Sign up
+                        Create Account
                       </Text>
                       <Text className="text-center text-base text-gray-300">
-                        to continue to Lemi
+                        Get started with Lemi
                       </Text>
                     </View>
 
@@ -716,7 +729,7 @@ const SignUpScreen: React.FC = () => {
                       <TouchableOpacity
                         onPress={onSelectOAuth}
                         disabled={isGoogleLoading || isLoading}
-                        className="w-full flex-row items-center justify-center space-x-3 rounded-xl border-2 border-gray-600 bg-transparent px-4 py-3.5">
+                        className="w-full flex-row items-center justify-center space-x-3 rounded-xl border-2 border-gray-600 bg-transparent px-4 py-4">
                         {isGoogleLoading ? (
                           <ActivityIndicator color="white" />
                         ) : (
@@ -732,21 +745,21 @@ const SignUpScreen: React.FC = () => {
 
                     {/* Divider */}
                     <View className="mb-8 flex-row items-center px-8">
-                      <View className="h-[1px] flex-1 bg-gray-600" />
-                      <Text className="mx-4 text-gray-300">or</Text>
-                      <View className="h-[1px] flex-1 bg-gray-600" />
+                      <View className="h-px flex-1 bg-gray-600" />
+                      <Text className="mx-3 text-gray-300 text-sm">OR</Text>
+                      <View className="h-px flex-1 bg-gray-600" />
                     </View>
 
                     {/* Form */}
-                    <View className="space-y-5 px-8">
+                    <View className="space-y-6 px-8">
                       {renderEmailInput()}
 
                       <View className="mb-2">
-                        <Text className="mb-2 font-medium text-gray-300">Password</Text>
+                        <Text className="mb-2.5 font-medium text-gray-300">Password</Text>
                         <View className="relative mb-1">
                           <TextInput
                             ref={passwordInputRef}
-                            className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 pr-12 text-white ${
+                            className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 pr-12 text-white text-base ${
                               !isPasswordValid && password.length > 0
                                 ? 'border-red-500'
                                 : 'border-gray-600'

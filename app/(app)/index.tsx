@@ -401,29 +401,14 @@ const MainPage = () => {
     }
   };
 
-  // Add network error UI
-  if (isNetworkError) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#343541] px-4">
-        <Text className="text-white text-lg text-center mb-4">
-          Unable to connect to the server
-        </Text>
-        <TouchableOpacity
-          onPress={handleRetry}
-          className="flex-row items-center space-x-2 bg-[#10a37f] px-6 py-3 rounded-xl"
-        >
-          {isRetrying ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <>
-              <RefreshCw size={20} color="white" />
-              <Text className="text-white font-medium">Retry</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  // Add refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Add refresh handler
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    generateScript(true).finally(() => setIsRefreshing(false));
+  };
 
   // Add loading state check
   if (!isLoaded) {

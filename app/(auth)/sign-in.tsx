@@ -111,9 +111,8 @@ export default function SignInScreen() {
   }, [isLoaded, emailAddress, isValidEmail]);
 
   const onPasswordSubmit = React.useCallback(async () => {
-    if (!isLoaded) {
-      return;
-    }
+    if (!isLoaded) return;
+    
     if (!password) {
       Toast.error('Please enter your password', 'top');
       return;
@@ -121,6 +120,14 @@ export default function SignInScreen() {
     setIsLoading(true);
 
     try {
+      // First deactivate any existing session
+      try {
+        await signIn.deactivate();
+      } catch (error) {
+        console.log("Error deactivating existing session:", error);
+      }
+
+      // Create new sign-in attempt
       const attempt = await signIn.create({
         identifier: emailAddress,
         strategy: 'password',
@@ -129,11 +136,7 @@ export default function SignInScreen() {
 
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
-        try {
-          router.replace('/(app)');
-        } catch (navError) {
-          console.error('Navigation error:', navError);
-        }
+        router.replace('/(app)');
       } else {
         setShowOTPModal(true);
       }
@@ -226,9 +229,18 @@ export default function SignInScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      await handleOAuth();
+      const result = await handleOAuth();
+      
+      if (result?.createdSessionId && result?.setActive) {
+        await result.setActive({ session: result.createdSessionId });
+        // Ensure the session is active before navigation
+        setTimeout(() => {
+          router.replace('/(app)');
+        }, 100);
+      }
     } catch (error) {
-      Toast.error('Google sign-in failed', 'top');
+      console.error('Google sign-in error:', error);
+      Toast.error('Google sign-in failed');
     } finally {
       setIsLoading(false);
     }
@@ -423,28 +435,27 @@ export default function SignInScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             ref={scrollViewRef}>
-            <View className="pt-12 px-4 mb-4">
+            <View className="pt-5 px-4 mb-2">
               <TouchableOpacity 
                 onPress={handleBack}
-                className="flex-row items-center p-2"
+                className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12"
               >
-                <FontAwesome name="arrow-left" size={16} color="#9ca3af" />
-                <Text className="ml-2 text-gray-300 text-base">Back</Text>
+                <FontAwesome name="arrow-left" size={18} color="#9ca3af" />
               </TouchableOpacity>
             </View>
 
-            <View className="flex-1 justify-center py-6">
+            <View className="flex-1 justify-center py-4">
               <View className="mb-8 px-8">
                 <Text className="mb-2 text-center text-3xl font-bold text-white">Sign in</Text>
                 <Text className="text-center text-base text-gray-300">to continue to Lemi</Text>
               </View>
 
-              {/* Social Login Button */}
+              {/* Updated Social Login Button */}
               <View className="mb-8 px-8">
                 <TouchableOpacity
                   onPress={handleGoogleSignIn}
                   disabled={isLoading}
-                  className="w-full flex-row items-center justify-center space-x-3 rounded-xl border-2 border-gray-600 bg-transparent px-4 py-3.5">
+                  className="w-full flex-row items-center justify-center space-x-3 rounded-xl border-2 border-gray-600 bg-transparent px-4 py-4">
                   {isLoading ? (
                     <ActivityIndicator color="white" />
                   ) : (
@@ -458,17 +469,17 @@ export default function SignInScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Divider */}
+              {/* Updated Divider */}
               <View className="mb-8 flex-row items-center px-8">
-                <View className="h-[1px] flex-1 bg-gray-600" />
-                <Text className="mx-4 text-gray-300">or</Text>
-                <View className="h-[1px] flex-1 bg-gray-600" />
+                <View className="h-px flex-1 bg-gray-600" />
+                <Text className="mx-3 text-gray-300 text-sm">OR</Text>
+                <View className="h-px flex-1 bg-gray-600" />
               </View>
 
-              {/* Form */}
-              <View className="space-y-5 px-8">
+              {/* Updated Form Container */}
+              <View className="space-y-6 px-8">
                 <View>
-                  <Text className="mb-2 font-medium text-gray-300">Email address</Text>
+                  <Text className="mb-2.5 font-medium text-gray-300">Email address</Text>
                   <View className="relative">
                     <TextInput
                       className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 text-white ${
@@ -494,7 +505,7 @@ export default function SignInScreen() {
                 </View>
               </View>
 
-              {/* Continue Button */}
+              {/* Updated Continue Button */}
               <View className="mt-8 px-8">
                 <TouchableOpacity
                   className="w-full rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
@@ -508,17 +519,18 @@ export default function SignInScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Sign Up and Forgot Password Links */}
+              {/* Updated Sign Up Link */}
               <View className="mt-6 flex-row justify-center">
-                <Text className="text-gray-300">Don't have an account? </Text>
+                <Text className="text-gray-300 text-sm">Don't have an account? </Text>
                 <Pressable onPress={navigateToSignUp}>
-                  <Text className="font-semibold text-[#10a37f]">Sign up</Text>
+                  <Text className="font-semibold text-[#10a37f] text-sm">Sign up</Text>
                 </Pressable>
               </View>
 
+              {/* Updated Forgot Password Link */}
               <View className="mt-4 flex-row justify-center">
                 <Pressable onPress={() => router.push('/(auth)/reset-password')}>
-                  <Text className="font-semibold text-[#10a37f]">Forgot password?</Text>
+                  <Text className="font-semibold text-[#10a37f] text-sm">Forgot password?</Text>
                 </Pressable>
               </View>
             </View>
