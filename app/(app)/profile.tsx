@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Image, Modal } from 'react-native';
 import React, { useState } from 'react';
 import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const Profile = () => {
   const { signOut } = useClerk();
@@ -19,59 +19,62 @@ const Profile = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#343541]">
-      {/* Header */}
-      <View className="bg-[#2A2B32] px-6 py-4 border-b border-gray-700">
+    <View className="flex-1 bg-[#343541]">
+      {/* Header
+      <View className="bg-[#2A2B32] px-6 py-6">
         <Text className="text-2xl font-bold text-white">Profile</Text>
         <Text className="text-gray-400 mt-1">Manage your account settings</Text>
-      </View>
+      </View> */}
 
       {/* Content */}
-      <View className="flex-1 items-center justify-center space-y-8 px-4 py-10">
+      <View className="flex-1 px-6 py-8">
         {/* Profile Picture */}
-        <View className="relative">
-          <Image 
-            source={{ uri: user?.imageUrl || defaultImage }} 
-            style={{ width: 120, height: 120, borderRadius: 60 }} 
-            className="border-4 border-[#10a37f] shadow-md"
-          />
-          <TouchableOpacity 
-            className="absolute bottom-0 right-0 bg-[#10a37f] p-2 rounded-full"
-            onPress={() => alert("Change photo coming soon!")}
-          >
-            <Text className="text-white text-xs">Edit</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* User Info */}
-        <View className="items-center space-y-3">
-          <Text className="text-3xl font-bold text-white">
-            {user?.firstName} {user?.lastName}
-          </Text>
-          <Text className="text-lg text-gray-300">{user?.emailAddresses[0].emailAddress}</Text>
-          <Text className="text-sm text-[#10a37f]">
-            Status: Active
-          </Text>
+        <View className="items-center">
+          <View className="relative">
+            <Image 
+              source={{ uri: user?.imageUrl || defaultImage }} 
+              style={{ width: 120, height: 120, borderRadius: 60 }} 
+              className="border-4 border-[#10a37f] shadow-md"
+            />
+            <TouchableOpacity 
+              className="absolute bottom-0 right-0 bg-[#10a37f] p-2 rounded-full"
+              onPress={() => alert("Change photo coming soon!")}
+            >
+              <Text className="text-white text-xs">Edit</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* User Info */}
+          <View className="mt-6 items-center space-y-2">
+            <Text className="text-2xl font-bold text-white">
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text className="text-base text-gray-300">{user?.emailAddresses[0].emailAddress}</Text>
+            <Text className="text-sm text-[#10a37f] font-medium">
+              Status: Active
+            </Text>
+          </View>
         </View>
 
         {/* Action Buttons */}
-        <View className="w-full space-y-3 px-4 mt-4">
+        <View className="mt-12 space-y-4">
           <TouchableOpacity
             onPress={() => alert("Edit Profile feature coming soon!")}
-            className="w-full rounded-lg mt-4 bg-[#10a37f] py-4 active:bg-[#0e906f]"
+            className="w-full rounded-lg bg-[#10a37f] py-3.5 active:bg-[#0e906f] mt-4"
           >
             <Text className="text-white text-center font-semibold">Edit Profile</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setShowSignOutModal(true)}
-            className="w-full rounded-lg mt-4 border border-red-600 bg-[#ff1100] py-4 active:bg-[#900e0e]"
+            className="w-full rounded-lg bg-transparent border border-red-500 py-3.5 active:bg-red-950/30 mt-4"
           >
-            <Text className="text-white text-center font-semibold">Sign Out</Text>
+            <Text className="text-red-500 text-center font-semibold">Sign Out</Text>
           </TouchableOpacity>
+
         </View>
 
-        {/* Sign Out Confirmation Modal */}
+        {/* Sign Out Modal */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -79,15 +82,15 @@ const Profile = () => {
           onRequestClose={() => setShowSignOutModal(false)}
         >
           <View className="flex-1 justify-center items-center bg-black/50">
-            <View className="bg-[#343541] p-6 rounded-2xl w-[80%] items-center space-y-4">
-              <Text className="text-xl font-bold text-red-500">Sign Out</Text>
-              <Text className="text-gray-300 text-center">
+            <View className="bg-[#2A2B32] p-6 rounded-xl w-[85%] max-w-sm">
+              <Text className="text-xl font-bold text-white text-center">Sign Out</Text>
+              <Text className="text-gray-300 text-center mt-3">
                 Are you sure you want to sign out?
               </Text>
-              <View className="flex-row gap-4 w-full mt-2">
+              <View className="flex-row gap-3 mt-6">
                 <TouchableOpacity
                   onPress={() => setShowSignOutModal(false)}
-                  className="flex-1 rounded-lg border border-gray-600 bg-transparent py-4 active:bg-gray-800"
+                  className="flex-1 rounded-lg border border-gray-600 py-3 active:bg-gray-800"
                 >
                   <Text className="text-center font-semibold text-white">Cancel</Text>
                 </TouchableOpacity>
@@ -96,7 +99,7 @@ const Profile = () => {
                     setShowSignOutModal(false);
                     signOut();
                   }}
-                  className="flex-1 rounded-lg bg-[#ff1100] py-4 active:bg-[#900e0e]"
+                  className="flex-1 rounded-lg bg-red-500 py-3 active:bg-red-600"
                 >
                   <Text className="text-center font-semibold text-white">Sign Out</Text>
                 </TouchableOpacity>
@@ -105,7 +108,7 @@ const Profile = () => {
           </View>
         </Modal>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

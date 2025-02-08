@@ -1,11 +1,25 @@
 import { useAuth } from '@clerk/clerk-expo';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
-import { Sparkles, Loader } from 'lucide-react-native';
+import { 
+  Sparkles, 
+  Loader, 
+  Pencil, 
+  Settings, 
+  ChevronDown, 
+  ChevronUp, 
+  Lightbulb,
+  X,
+  RefreshCw,
+  Trash2,
+  Video,
+  Tag,
+  Copy,
+  Share2
+} from 'lucide-react-native';
 import React from 'react';
 import {
   View,
@@ -30,8 +44,18 @@ import { useScriptStore } from '~/store/scriptStore';
 const CONFIG = {
   GEMINI_API_KEY:
     Constants.expoConfig?.extra?.GOOGLE_GEMINI_API_KEY || 'AIzaSyAs4vFUhoajF79bzBdpP1fgVNgPa8whAEU',
-  THEME_COLOR: '#10a37f', // Primary green color
-  BG_COLOR: '#343541', // Dark background color
+  COLORS: {
+    primary: '#10a37f',      // Primary green color
+    primaryActive: '#0e906f', // Darker green for active states
+    background: '#343541',    // Dark background color
+    border: '#4b5563',       // Border color (gray-600)
+    text: {
+      primary: '#ffffff',    // White text
+      secondary: '#9ca3af',  // Gray text (gray-400)
+      tertiary: '#6b7280',   // Darker gray text (gray-500)
+    },
+    error: '#ef4444',        // Red for errors
+  },
 };
 
 interface OptionButtonProps {
@@ -45,7 +69,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ label, isSelected, onPress 
     onPress={onPress}
     activeOpacity={0.7}
     className={`rounded-xl px-4 py-2.5 ${
-      isSelected ? 'bg-[#10a37f]' : 'border-2 border-gray-600 bg-transparent'
+      isSelected ? `bg-[${CONFIG.COLORS.primary}]` : 'border-2 border-gray-600 bg-transparent'
     }`}>
     <Text className={`text-base ${isSelected ? 'font-bold text-white' : 'text-gray-300'}`}>
       {label}
@@ -87,18 +111,18 @@ const MarkdownContent = ({ content }: { content: string }) => {
     <View style={{ flex: 1 }}>
       <Markdown
         style={{
-          body: { color: '#ffffff', lineHeight: 24, flex: 1 },
+          body: { color: CONFIG.COLORS.text.primary, lineHeight: 24, flex: 1 },
           heading1: {
-            color: '#10a37f',
+            color: CONFIG.COLORS.primary,
             fontSize: 24,
             fontWeight: 'bold',
             marginVertical: 16,
             borderBottomWidth: 1,
-            borderBottomColor: '#4b5563',
+            borderBottomColor: CONFIG.COLORS.border,
             paddingBottom: 8,
           },
           heading2: {
-            color: '#ffffff',
+            color: CONFIG.COLORS.text.primary,
             fontSize: 20,
             fontWeight: '600',
             marginVertical: 12,
@@ -106,7 +130,7 @@ const MarkdownContent = ({ content }: { content: string }) => {
             padding: 12,
             borderRadius: 8,
             borderLeftWidth: 4,
-            borderLeftColor: '#10a37f',
+            borderLeftColor: CONFIG.COLORS.primary,
           },
           blockquote: {
             marginVertical: 12,
@@ -114,21 +138,21 @@ const MarkdownContent = ({ content }: { content: string }) => {
             padding: 16,
             borderRadius: 8,
             borderLeftWidth: 3,
-            borderLeftColor: '#10a37f',
+            borderLeftColor: CONFIG.COLORS.primary,
           },
           blockquote_text: {
-            color: '#ffffff',
+            color: CONFIG.COLORS.text.primary,
             fontStyle: 'italic',
             fontSize: 16,
           },
           paragraph: {
-            color: '#ffffff',
+            color: CONFIG.COLORS.text.primary,
             marginVertical: 8,
             lineHeight: 24,
             fontSize: 16,
           },
           text: {
-            color: '#ffffff',
+            color: CONFIG.COLORS.text.primary,
           },
           list_item: {
             marginVertical: 8,
@@ -140,19 +164,19 @@ const MarkdownContent = ({ content }: { content: string }) => {
           bullet_list_content: {
             flex: 1,
             borderLeftWidth: 2,
-            borderLeftColor: '#10a37f',
+            borderLeftColor: CONFIG.COLORS.primary,
             backgroundColor: '#1F2937',
             padding: 12,
             borderRadius: 8,
           },
           em: {
-            color: '#10a37f',
+            color: CONFIG.COLORS.primary,
             fontStyle: 'normal',
             fontWeight: 'bold',
           },
           strong: {
-            color: '#10a37f',
-            backgroundColor: '#10a37f20',
+            color: CONFIG.COLORS.primary,
+            backgroundColor: CONFIG.COLORS.primary + '20',
             paddingHorizontal: 6,
             paddingVertical: 2,
             borderRadius: 4,
@@ -161,7 +185,7 @@ const MarkdownContent = ({ content }: { content: string }) => {
             marginVertical: 12,
           },
           link: {
-            color: '#10a37f',
+            color: CONFIG.COLORS.primary,
             textDecorationLine: 'underline',
             fontWeight: 'bold',
           },
@@ -363,7 +387,7 @@ const MainPage = () => {
   if (!isLoaded) {
     return (
       <View className="flex-1 items-center justify-center bg-[#343541]">
-        <ActivityIndicator size="large" color="#10a37f" />
+        <ActivityIndicator size="large" color={CONFIG.COLORS.primary} />
       </View>
     );
   }
@@ -375,14 +399,12 @@ const MainPage = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#343541]">
+    <SafeAreaView className="flex-1 bg-transparent">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <ScrollView
-
-
           keyboardShouldPersistTaps="handled"
           className="flex-1"
           contentContainerStyle={{
@@ -390,7 +412,7 @@ const MainPage = () => {
             paddingBottom: 40,
           }}>
           {/* Updated Header */}
-          <View className="border-b border-gray-700 bg-[#2A2B32] px-6 py-4">
+          <View className="border-b border-gray-700 bg-transparent px-6 py-4">
             <Text className="text-2xl font-bold text-white">YouTube Script Generator</Text>
             <Text className="mt-1 text-gray-400">Create engaging video scripts in seconds</Text>
           </View>
@@ -399,7 +421,7 @@ const MainPage = () => {
             {/* Topic Input with improved styling */}
             <View className="mb-4 gap-3">
               <View className="flex-row items-center gap-2">
-                <AntDesign name="edit" size={24} color="#10a37f" />
+                <Pencil size={24} color={CONFIG.COLORS.primary} />
                 <Text className="text-lg font-bold text-gray-300">Video Topic</Text>
               </View>
               <TextInput
@@ -407,27 +429,26 @@ const MainPage = () => {
                 value={topic}
                 onChangeText={setTopic}
                 multiline
-                className="min-h-[120px] rounded-xl border-2 border-gray-600 bg-[#2A2B32] p-4 text-base text-white"
-                placeholderTextColor="#9ca3af"
+                className="min-h-[120px] rounded-xl border-2 border-gray-600 bg-transparent p-4 text-base text-white"
+                placeholderTextColor={CONFIG.COLORS.text.secondary}
               />
             </View>
 
             {/* Options Toggle with updated styling */}
             <TouchableOpacity
-              className="mb-4 flex-row items-center justify-between rounded-xl border-2 border-gray-600 bg-[#2A2B32] p-4"
+              className="mb-4 flex-row items-center justify-between rounded-xl border-2 border-gray-600 bg-transparent p-4"
               onPress={() => setShowOptions(!showOptions)}>
               <View className="flex-row items-center gap-3">
-                <AntDesign
-                  name="setting"
+                <Settings
                   size={24}
-                  color="#10a37f"
+                  color={CONFIG.COLORS.primary}
                   style={{ transform: [{ rotate: `${rotation}deg` }] }}
                 />
                 <Text className="ml-2 text-base font-bold text-gray-300">
                   Customize Your Script
                 </Text>
               </View>
-              <AntDesign name={showOptions ? 'up' : 'down'} size={20} color="#10a37f" />
+              <ChevronDown name={showOptions ? 'up' : 'down'} size={20} color={CONFIG.COLORS.primary} />
             </TouchableOpacity>
 
             {/* Script Options with conditional rendering */}
@@ -451,9 +472,9 @@ const MainPage = () => {
                 {loading ? (
                   <>
                     <View className="items-center justify-center p-4">
-                      <ActivityIndicator size="large" color="#10a37f" />
+                      <ActivityIndicator size="large" color={CONFIG.COLORS.primary} />
                       <View className="mt-4 flex-row items-center gap-2">
-                        <AntDesign name="bulb1" size={24} color="#10a37f" />
+                        <Lightbulb size={24} color={CONFIG.COLORS.primary} />
                         <Text className="text-center text-gray-300">
                           {loadingMessages[loadingMessageIndex]}
                         </Text>
@@ -463,7 +484,7 @@ const MainPage = () => {
                       className="items-center justify-center rounded-xl bg-red-500 p-4"
                       onPress={stopGeneration}>
                       <View className="flex-row items-center gap-2">
-                        <AntDesign name="close" size={24} color="white" />
+                        <X size={24} color="white" />
                         <Text className="text-lg font-bold text-white">Stop Generation</Text>
                       </View>
                     </TouchableOpacity>
@@ -487,7 +508,7 @@ const MainPage = () => {
                           onPress={() => generateScript(true)}
                           disabled={loading}>
                           <View className="flex-row items-center gap-2">
-                            <AntDesign name="reload1" size={24} color="#10a37f" />
+                            <RefreshCw size={24} color="#10a37f" />
                             <Text className="text-lg font-bold text-[#10a37f]">Regenerate</Text>
                           </View>
                         </TouchableOpacity>
@@ -500,7 +521,7 @@ const MainPage = () => {
                           }}
                           disabled={loading}>
                           <View className="flex-row items-center gap-2">
-                            <AntDesign name="delete" size={24} color="#ef4444" />
+                            <Trash2 size={24} color="#ef4444" />
                             <Text className="text-lg font-bold text-red-500">Clear Script</Text>
                           </View>
                         </TouchableOpacity>
@@ -518,15 +539,15 @@ const MainPage = () => {
 
             {/* Generated Script */}
             {script && (
-              <View className="mb-8 gap-4 rounded-xl border-2 border-gray-600 bg-[#2A2B32] p-4">
+              <View className="mb-8 gap-4 rounded-xl border-2 border-gray-600 bg-transparent p-4">
                 {/* Script Header */}
                 <View className="mb-4 border-b border-gray-600 pb-4">
                   <View className="flex-row items-center gap-2">
-                    <AntDesign name="videocamera" size={24} color="#10a37f" />
+                    <Video size={24} color={CONFIG.COLORS.primary} />
                     <Text className="text-2xl font-bold text-white">Your YouTube Script</Text>
                   </View>
                   <View className="mt-2 flex-row items-center gap-2">
-                    <AntDesign name="tag" size={16} color="#9ca3af" />
+                    <Tag size={16} color={CONFIG.COLORS.text.secondary} />
                     <Text className="text-gray-400">Topic: {topic}</Text>
                   </View>
                 </View>
@@ -537,14 +558,14 @@ const MainPage = () => {
                     onPress={handleCopyToClipboard}
                     className="flex-1 flex-row items-center justify-center rounded-xl border border-[#10a37f]/30 bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30"
                     accessibilityLabel="Copy">
-                    <AntDesign name="copy1" size={20} color="#10a37f" />
+                    <Copy size={20} color={CONFIG.COLORS.primary} />
                     <Text className="ml-2 font-bold text-[#10a37f]">Copy Script</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={handleFileShare}
                     className="flex-1 flex-row items-center justify-center rounded-xl border border-[#10a37f]/30 bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30"
                     accessibilityLabel="Share">
-                    <AntDesign name="sharealt" size={20} color="#10a37f" />
+                    <Share2 size={20} color={CONFIG.COLORS.primary} />
                     <Text className="ml-2 font-bold text-[#10a37f]">Share Script</Text>
                   </TouchableOpacity>
                 </View>
@@ -561,4 +582,4 @@ const MainPage = () => {
 };
 
 export default MainPage;
-  <Loader />
+

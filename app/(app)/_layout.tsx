@@ -1,11 +1,11 @@
 import { useAuth, useClerk } from '@clerk/clerk-expo';
 import { Redirect, Stack, useRouter } from 'expo-router';
-import { Home, User, Menu, LogOut, X } from 'lucide-react-native';
+import { Home, User, Menu, LogOut, X, PenSquare } from 'lucide-react-native';
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import Modal from 'react-native-modal';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign } from '@expo/vector-icons';
+
 import { AlignLeft } from 'lucide-react-native';
 
 const LayoutGroup = () => {
@@ -58,45 +58,45 @@ const LayoutGroup = () => {
   return (
     <>
       {/* Header */}
-      <View className="h-11 flex-row items-center justify-between px-4 bg-[#343541]">
+      <View className="h-14 flex-row items-center justify-between px-4 bg-[#343541] border-b border-gray-800">
         <TouchableOpacity 
           onPress={toggleSidebar}
-          className="w-8 h-8 items-center justify-center"
+          className="w-10 h-10 items-center justify-center active:opacity-70"
         >
-          <AlignLeft size={20} color="#fff" strokeWidth={2.5} />
+          <AlignLeft size={24} color="#fff" strokeWidth={2.5} />
         </TouchableOpacity>
-        
 
         <TouchableOpacity 
-          className="w-8 h-8 items-center justify-center"
+          className="w-10 h-10 items-center justify-center active:opacity-70"
         >
-          <AntDesign name="edit" size={20} color="#fff" />
+          <PenSquare size={24} color="#fff" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
       {/* Content */}
-      <View className="flex-1 bg-[#1E1E1E]">
+      <View className="flex-1 bg-[#1A1A1A]">
         <Stack 
           screenOptions={{ 
             headerShown: false,
-            contentStyle: { backgroundColor: '#1E1E1E' },
+            contentStyle: { backgroundColor: '#1A1A1A' },
             animation: 'none',
-          }} 
-
-
+          }}
         />
       </View>
 
       {/* Sidebar */}
       <Animated.View
-        className="absolute left-0 top-0 h-full w-[280px] bg-[#1E1E1E] border-r border-gray-800"
+        className="absolute left-0 top-0 h-full w-[280px] bg-[#1E1E1E] border-r-2 border-gray-800 shadow-xl shadow-black/50"
         style={{ transform: [{ translateX: slideAnim }] }}
       >
         <SafeAreaView className="flex-1">
           <View className="flex-row items-center justify-between p-4 border-b border-gray-800">
-            <Text className="text-base font-medium text-white">Menu</Text>
-            <TouchableOpacity onPress={toggleSidebar}>
-              <X size={22} color="#fff" />
+            <Text className="text-lg font-semibold text-white">Menu</Text>
+            <TouchableOpacity 
+              onPress={toggleSidebar}
+              className="p-1 active:opacity-70"
+            >
+              <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -108,21 +108,21 @@ const LayoutGroup = () => {
                   router.push(item.route as any);
                   toggleSidebar();
                 }}
-                className="flex-row items-center px-3 py-3 rounded-lg active:bg-gray-800"
+                className="flex-row items-center px-4 py-3.5 rounded-lg active:bg-gray-800/50"
               >
-                <item.icon size={20} color="#fff" />
-                <Text className="ml-3 text-white text-base">{item.label}</Text>
+                <item.icon size={22} color="#fff" />
+                <Text className="ml-4 text-white text-base font-medium">{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
           <View className="p-2 border-t border-gray-800">
             <TouchableOpacity 
-              className="flex-row items-center px-3 py-3 rounded-lg active:bg-gray-800" 
+              className="flex-row items-center px-4 py-3.5 rounded-lg active:bg-red-500/10"
               onPress={() => setShowModal(true)}
             >
-              <LogOut size={20} color="#ef4444" />
-              <Text className="ml-3 text-red-500 text-base">Sign Out</Text>
+              <LogOut size={22} color="#ef4444" />
+              <Text className="ml-3 text-red-500 text-base font-medium">Sign Out</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -132,32 +132,35 @@ const LayoutGroup = () => {
       <Modal
         isVisible={showModal}
         onBackdropPress={() => setShowModal(false)}
-        backdropOpacity={0.5}
+        backdropOpacity={0.7}
         animationIn="fadeIn"
         animationOut="fadeOut"
+        style={{ margin: 0 }}
       >
-        <View className="flex-1 items-center justify-center p-4">
-          <View className="w-[90%] max-w-md rounded-xl bg-[#1E1E1E] p-6 border border-gray-800">
-            <Text className="text-lg font-medium text-white mb-3 text-center">Sign Out</Text>
-            <Text className="text-gray-400 text-center text-base mb-6">
-              Are you sure you want to sign out?
+        <View className="flex-1 items-center justify-center px-4">
+          <View className="w-[90%] max-w-md rounded-2xl bg-[#1E1E1E] p-6 border-2 border-gray-800 shadow-2xl shadow-black/50">
+            <View className="pb-4 mb-4">
+              <Text className="text-xl font-bold text-white text-center">Confirm Sign Out</Text>
+            </View>
+            <Text className="text-gray-300 text-center text-base mb-8 px-4">
+              Are you sure you want to sign out of your account?
             </Text>
-            <View className="flex-row justify-center space-x-3">
+            <View className="flex-row justify-center gap-4">
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
-                className="px-6 py-2.5 border border-gray-700 rounded-lg active:bg-gray-800"
+                className="flex-1 px-6 py-3.5 border border-gray-700 rounded-full active:bg-gray-800"
               >
-                <Text className="text-white text-base">Cancel</Text>
+                <Text className="text-white text-base font-medium text-center">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={confirmSignOut}
                 disabled={loading}
-                className="px-6 py-2.5 rounded-lg bg-red-500 active:bg-red-600"
+                className="flex-1 px-6 py-4 rounded-full bg-red-500 active:bg-red-600 ml-2" 
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className="text-white text-base">Sign Out</Text>
+                  <Text className="text-white text-base font-medium text-center">Sign Out</Text>
                 )}
               </TouchableOpacity>
             </View>
