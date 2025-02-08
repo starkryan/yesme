@@ -19,10 +19,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useScriptStore } from '~/store/scriptStore';
 import Markdown from 'react-native-markdown-display';
+import { Toast } from 'toastify-react-native';
 
 // Environment configuration (should use actual environment variables in production)
 const CONFIG = {
-  GEMINI_API_KEY: Constants.expoConfig?.extra?.GOOGLE_GEMINI_API_KEY || '',
+  GEMINI_API_KEY: Constants.expoConfig?.extra?.GOOGLE_GEMINI_API_KEY || 'AIzaSyAs4vFUhoajF79bzBdpP1fgVNgPa8whAEU',
   THEME_COLOR: '#10a37f', // Primary green color
   BG_COLOR: '#343541',    // Dark background color
 };
@@ -36,8 +37,8 @@ interface OptionButtonProps {
 const OptionButton: React.FC<OptionButtonProps> = ({ label, isSelected, onPress }) => (
   <TouchableOpacity
     onPress={onPress}
-    className={`rounded-full px-4 py-2 ${
-      isSelected ? 'bg-[#10a37f]' : 'bg-[#2a2b32] border border-gray-600'
+    className={`rounded-xl px-4 py-2 ${
+      isSelected ? 'bg-[#10a37f]' : 'bg-transparent border-2 border-gray-600'
     }`}>
     <Text className={`text-sm ${isSelected ? 'text-white font-bold' : 'text-gray-300'}`}>
       {label}
@@ -92,18 +93,43 @@ const MainPage = () => {
   // Add state for controlling generation
   const [controller, setController] = React.useState<AbortController | null>(null);
 
+  // Add state for loading message
+  const [loadingMessageIndex, setLoadingMessageIndex] = React.useState(0);
+  
+  const loadingMessages = [
+    "AI is crafting something amazing... 🎥",
+    "Brainstorming creative ideas for your video... 💡",
+    "Structuring your content for maximum engagement... 📊",
+    "Adding engaging hooks and transitions... ✨",
+    "Polishing your script to perfection... ⭐",
+    "Almost there, finalizing your YouTube script... 🎬"
+  ];
+
+  // Add effect to rotate messages during loading
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 3000); // Change message every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
   // Add function to stop generation
   const stopGeneration = () => {
     if (controller) {
       controller.abort();
       setController(null);
       setLoading(false);
+      setError('Generation stopped');
+      Toast.info('Generation stopped by user', 'top');
     }
   };
 
   const generateScript = async (isRegenerate: boolean = false) => {
     if (!topic.trim()) {
-      Alert.alert('Error', 'Please enter a topic before generating');
+      Toast.error('Please enter a topic before generating', 'top');
       return;
     }
 
@@ -124,28 +150,49 @@ const MainPage = () => {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       const prompt = `
-        Create a YouTube script about: ${topic.trim()}
-        Target Audience: ${scriptOptions.audience.options[scriptOptions.audience.value].trim()}
-        Style: ${scriptOptions.style.options[scriptOptions.style.value]}
-        Duration: ${scriptOptions.duration.options[scriptOptions.duration.value]} minutes
-        Age Group: ${scriptOptions.age.options[scriptOptions.age.value]}
-        Language: ${scriptOptions.language.options[scriptOptions.language.value]}
-        Include Memes: ${scriptOptions.memes.options[scriptOptions.memes.value]}
-        Platform: ${scriptOptions.platform.options[scriptOptions.platform.value]}
+        You are an expert YouTube script writer. Create a highly engaging script for a ${scriptOptions.duration.options[scriptOptions.duration.value]}-minute video.
 
-        Structure Requirements:
-        - Engaging hook in the first 5 seconds
-        - Clear introduction with topic overview
-        - Main content divided into 3-5 key points
-        - Summary and call-to-action in conclusion
-        - Include visual cues for transitions
-        - Add suggested background music type
-        - Specify camera angles where appropriate
+        Topic: ${topic.trim()}
 
-        Important Notes:
-        - Use only ${scriptOptions.language.options[scriptOptions.language.value]} language
-        - Format in markdown with clear section headings
-        - Keep paragraphs concise for readability
+        Content Requirements:
+        - Target Audience: ${scriptOptions.audience.options[scriptOptions.audience.value]}
+        - Style: ${scriptOptions.style.options[scriptOptions.style.value]}
+        - Age Group: ${scriptOptions.age.options[scriptOptions.age.value]}
+        - Platform: ${scriptOptions.platform.options[scriptOptions.platform.value]}
+        - Language: ${scriptOptions.language.options[scriptOptions.language.value]}
+        - Meme Integration: ${scriptOptions.memes.options[scriptOptions.memes.value]}
+
+        Script Structure:
+        1. Hook (0:00-0:15):
+           - Create an attention-grabbing opening
+           - Use pattern interrupts
+           - Tease the value viewers will get
+
+        2. Intro (0:15-0:45):
+           - Introduce yourself and establish credibility
+           - Clear problem statement
+           - Preview main points
+
+        3. Main Content (0:45-${scriptOptions.duration.options[scriptOptions.duration.value]}:00):
+           - 3-4 key sections with clear transitions
+           - Include B-roll suggestions
+           - Add camera angle variations
+           - Suggest background music mood changes
+           - Include timestamps for each section
+
+        4. Conclusion:
+           - Summarize key takeaways
+           - Strong call-to-action
+           - Engagement prompt (comment section)
+
+        Format the output in markdown with:
+        - Clear section headings (##)
+        - Timestamps in bold
+        - B-roll suggestions in italics
+        - Camera angles in blockquotes
+        - Music suggestions in code blocks
+
+        Keep the tone ${scriptOptions.style.options[scriptOptions.style.value].toLowerCase()} and optimize for ${scriptOptions.platform.options[scriptOptions.platform.value]} audience retention.
       `.trim();
 
       if (!CONFIG.GEMINI_API_KEY) {
@@ -155,12 +202,17 @@ const MainPage = () => {
       const result = await model.generateContent(prompt);
       const generatedText = await result.response.text();
       setScript(generatedText);
+      Toast.success('Script generated successfully!', 'top');
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        setError('Generation stopped');
+        // Remove these lines since we now handle them in stopGeneration()
+        // setError('Generation stopped');
+        // Toast.info('Generation stopped by user', 'top');
       } else {
         console.error('Generation error:', error);
-        setError('Failed to generate script. Please check your connection and try again.');
+        const errorMessage = error.message || 'Failed to generate script. Please check your connection and try again.';
+        setError(errorMessage);
+        Toast.error(errorMessage, 'top');
       }
     } finally {
       setLoading(false);
@@ -184,23 +236,14 @@ const MainPage = () => {
     }
   };
 
-  const ActionButton = ({
-    icon,
-    text,
-    onPress,
-  }: {
-    icon: React.ReactNode;
-    text: string;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      className="flex-1 flex-row items-center justify-center rounded-lg bg-green-500 p-2"
-      accessibilityLabel={text}>
-      {icon}
-      <Text className="ml-2 font-bold text-white">{text}</Text>
-    </TouchableOpacity>
-  );
+  const handleCopyToClipboard = async () => {
+    try {
+      await Clipboard.setStringAsync(script);
+      Toast.success('Script copied to clipboard', 'top');
+    } catch (error) {
+      Toast.error('Failed to copy script', 'top');
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#343541]">
@@ -209,33 +252,45 @@ const MainPage = () => {
         className="flex-1">
         <ScrollView 
           keyboardShouldPersistTaps="handled" 
-          className="flex-1 p-4"
+          className="flex-1"
         >
-          <View className="flex-1 gap-4">
-            {/* Topic Input - Updated background */}
-            <View className="gap-2">
-              <Text className="text-lg font-bold text-gray-300">Video Topic</Text>
+          {/* Header Section */}
+          <View className="bg-[#2A2B32] p-6 border-b border-gray-600">
+            <Text className="text-2xl font-bold text-white mb-2">YouTube Script Generator</Text>
+            <Text className="text-gray-400">Create engaging video scripts in seconds</Text>
+          </View>
+
+          <View className="p-4 gap-6">
+            {/* Topic Input with improved styling */}
+            <View className="gap-3 mb-4">
+              <View className="flex-row items-center gap-2">
+                <AntDesign name="edit" size={24} color="#10a37f" />
+                <Text className="text-lg font-bold text-gray-300">Video Topic</Text>
+              </View>
               <TextInput
-                placeholder="Enter your main topic or keyword..."
+                placeholder="What's your video about? Be specific..."
                 value={topic}
                 onChangeText={setTopic}
                 multiline
-                className="min-h-[100px] rounded-xl border border-gray-600 bg-transparent p-4 text-white"
-                placeholderTextColor="#9CA3AF"
+                className="min-h-[120px] rounded-xl border-2 border-gray-600 bg-[#2A2B32] p-4 text-white text-base"
+                placeholderTextColor="#9ca3af"
               />
             </View>
 
-            {/* More Options Button - Updated background */}
+            {/* Options Toggle with new design */}
             <TouchableOpacity
-              className="flex-row items-center justify-center rounded-xl bg-transparent p-4 border border-gray-600 gap-2"
+              className="flex-row items-center justify-between p-4 rounded-xl bg-[#2A2B32] border-2 border-gray-600 mb-4"
               onPress={() => setShowOptions(!showOptions)}>
-              <Text className="text-lg font-bold text-white">
-                {showOptions ? 'Hide Options' : 'More Options'}
-              </Text>
+              <View className="flex-row items-center gap-3 ">
+                <AntDesign name="setting" size={24} color="#10a37f" />
+                <Text className="text-base font-bold text-gray-300 ml-2">
+                  Customize Your Script
+                </Text>
+              </View>
               <AntDesign 
                 name={showOptions ? "up" : "down"} 
                 size={20} 
-                color="white" 
+                color="#10a37f" 
               />
             </TouchableOpacity>
 
@@ -254,22 +309,33 @@ const MainPage = () => {
               </View>
             )}
 
-            {/* Updated Generate/Stop/Regenerate Buttons Section */}
+            {/* Generate/Stop/Regenerate Buttons Section */}
             {!showOptions && (
-              <View className="gap-2">
+              <View className="gap-4 mt-4">
                 {loading ? (
-                  <TouchableOpacity
-                    className="items-center justify-center rounded-xl bg-red-500 p-4"
-                    onPress={stopGeneration}>
-                    <View className="flex-row items-center gap-2">
-                      <AntDesign name="close" size={24} color="white" />
-                      <Text className="text-lg font-bold text-white">Stop Generation</Text>
+                  <>
+                    <View className="items-center justify-center p-4">
+                      <ActivityIndicator size="large" color="#10a37f" />
+                      <View className="flex-row items-center gap-2 mt-4">
+                        <AntDesign name="bulb1" size={24} color="#10a37f" />
+                        <Text className="text-gray-300 text-center">
+                          {loadingMessages[loadingMessageIndex]}
+                        </Text>
+                      </View>
                     </View>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      className="items-center justify-center rounded-xl bg-red-500 p-4"
+                      onPress={stopGeneration}>
+                      <View className="flex-row items-center gap-2">
+                        <AntDesign name="close" size={24} color="white" />
+                        <Text className="text-lg font-bold text-white">Stop Generation</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
                 ) : (
                   <>
                     <TouchableOpacity
-                      className="items-center justify-center rounded-xl bg-[#10a37f] p-4 active:bg-[#0e906f]"
+                      className="items-center justify-center rounded-xl bg-[#10a37f] p-4 active:bg-[#0e906f] mb-4"
                       onPress={() => generateScript(false)}
                       disabled={loading}>
                       <View className="flex-row items-center gap-2">
@@ -279,15 +345,30 @@ const MainPage = () => {
                     </TouchableOpacity>
 
                     {script && (
-                      <TouchableOpacity
-                        className="items-center justify-center rounded-xl border border-[#10a37f] p-4"
-                        onPress={() => generateScript(true)}
-                        disabled={loading}>
-                        <View className="flex-row items-center gap-2">
-                          <AntDesign name="reload1" size={24} color="#10a37f" />
-                          <Text className="text-lg font-bold text-[#10a37f]">Regenerate</Text>
-                        </View>
-                      </TouchableOpacity>
+                      <>
+                        <TouchableOpacity
+                          className="items-center justify-center rounded-xl border-2 border-[#10a37f] p-4 mb-4"
+                          onPress={() => generateScript(true)}
+                          disabled={loading}>
+                          <View className="flex-row items-center gap-2">
+                            <AntDesign name="reload1" size={24} color="#10a37f" />
+                            <Text className="text-lg font-bold text-[#10a37f]">Regenerate</Text>
+                          </View>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          className="items-center justify-center rounded-xl border-2 border-red-500 p-4 mb-4"
+                          onPress={() => {
+                            setScript('');
+                            Toast.success('Script cleared', 'top');
+                          }}
+                          disabled={loading}>
+                          <View className="flex-row items-center gap-2">
+                            <AntDesign name="delete" size={24} color="#ef4444" />
+                            <Text className="text-lg font-bold text-red-500">Clear Script</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </>
                     )}
                   </>
                 )}
@@ -301,43 +382,123 @@ const MainPage = () => {
               </Text>
             )}
 
-            {/* Generated Script - Updated background */}
+            {/* Generated Script */}
             {script && (
-              <View className="rounded-xl border border-gray-600 bg-transparent p-4 gap-4">
-                <Text className="text-lg font-bold text-white">Your Script</Text>
-
-                <View className="flex-row gap-2">
-                  <ActionButton
-                    icon={<AntDesign name="copy1" size={20} color="white" />}
-                    text="Copy"
-                    onPress={() => Clipboard.setStringAsync(script)}
-                  />
-                  <ActionButton
-                    icon={<AntDesign name="sharealt" size={20} color="white" />}
-                    text="Share"
-                    onPress={handleFileShare}
-                  />
+              <View className="rounded-xl border-2 border-gray-600 bg-[#2A2B32] p-4 gap-4 mb-8">
+                {/* Script Header */}
+                <View className="border-b border-gray-600 pb-4 mb-4">
+                  <View className="flex-row items-center gap-2">
+                    <AntDesign name="videocamera" size={24} color="#10a37f" />
+                    <Text className="text-2xl font-bold text-white">Your YouTube Script</Text>
+                  </View>
+                  <View className="flex-row items-center gap-2 mt-2">
+                    <AntDesign name="tag" size={16} color="#9ca3af" />
+                    <Text className="text-gray-400">Topic: {topic}</Text>
+                  </View>
                 </View>
 
+                {/* Action Buttons */}
+                <View className="flex-row gap-2 mb-4">
+                  <TouchableOpacity
+                    onPress={handleCopyToClipboard}
+                    className="flex-1 flex-row items-center justify-center rounded-xl bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30 border border-[#10a37f]/30"
+                    accessibilityLabel="Copy">
+                    <AntDesign name="copy1" size={20} color="#10a37f" />
+                    <Text className="ml-2 font-bold text-[#10a37f]">Copy Script</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleFileShare}
+                    className="flex-1 flex-row items-center justify-center rounded-xl bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30 border border-[#10a37f]/30"
+                    accessibilityLabel="Share">
+                    <AntDesign name="sharealt" size={20} color="#10a37f" />
+                    <Text className="ml-2 font-bold text-[#10a37f]">Share Script</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Markdown Content */}
                 <Markdown
                   style={{
-                    body: { color: '#ffffff', lineHeight: 22 },
-                    heading1: { color: '#ffffff', fontSize: 20, fontWeight: 'bold', marginVertical: 12 },
-                    heading2: { color: '#ffffff', fontSize: 18, fontWeight: '600', marginVertical: 10 },
-                    paragraph: { color: '#ffffff', marginVertical: 8 },
-                    list_item: { color: '#ffffff', marginVertical: 4 },
-                    code_inline: { backgroundColor: '#4b5563', padding: 4, borderRadius: 4 },
+                    body: { color: '#ffffff', lineHeight: 24 },
+                    heading1: { 
+                      color: '#10a37f', 
+                      fontSize: 24, 
+                      fontWeight: 'bold', 
+                      marginVertical: 16,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#4b5563',
+                      paddingBottom: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    },
+                    heading2: { 
+                      color: '#ffffff', 
+                      fontSize: 20, 
+                      fontWeight: '600', 
+                      marginVertical: 12,
+                      backgroundColor: '#1F2937',
+                      padding: 12,
+                      borderRadius: 8,
+                      borderLeftWidth: 4,
+                      borderLeftColor: '#10a37f'
+                    },
+                    paragraph: { 
+                      color: '#ffffff', 
+                      marginVertical: 12,
+                      lineHeight: 24,
+                      fontSize: 16
+                    },
+                    list_item: { 
+                      color: '#ffffff', 
+                      marginVertical: 10,
+                      paddingLeft: 12,
+                      borderLeftWidth: 3,
+                      borderLeftColor: '#10a37f',
+                      backgroundColor: '#1F2937',
+                      padding: 12,
+                      borderRadius: 8,
+                      marginLeft: 8
+                    },
+                    code_inline: { 
+                      backgroundColor: '#10a37f20', 
+                      color: '#10a37f',
+                      padding: 4, 
+                      borderRadius: 4,
+                      fontWeight: 'bold'
+                    },
                     blockquote: {
-                      marginVertical: 8,
+                      marginVertical: 16,
                       paddingLeft: 16,
                       borderLeftWidth: 4,
-                      borderLeftColor: '#4b5563',
+                      borderLeftColor: '#10a37f',
+                      backgroundColor: '#1F2937',
+                      padding: 16,
+                      borderRadius: 8
                     },
-                    blockquote_content: { color: '#ffffff', fontStyle: 'italic' },
-                    blockquote_author: { color: '#ffffff', fontWeight: 'bold' },
-                    blockquote_source: { color: '#ffffff', fontStyle: 'italic' },
-                    blockquote_source_url_text_url_text: { color: '#ffffff', fontWeight: 'bold' },
-                    paragraph_link: { color: '#10a37f', textDecorationLine: 'underline' },
+                    blockquote_content: { 
+                      color: '#ffffff', 
+                      fontStyle: 'italic',
+                      fontSize: 16
+                    },
+                    em: { 
+                      color: '#10a37f',
+                      fontStyle: 'normal',
+                      fontWeight: 'bold'
+                    },
+                    strong: {
+                      color: '#10a37f',
+                      backgroundColor: '#10a37f20',
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      borderRadius: 4
+                    },
+                    bullet_list: {
+                      marginVertical: 12
+                    },
+                    paragraph_link: { 
+                      color: '#10a37f', 
+                      textDecorationLine: 'underline',
+                      fontWeight: 'bold'
+                    },
                   }}>
                   {script}
                 </Markdown>

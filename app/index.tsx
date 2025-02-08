@@ -31,7 +31,8 @@ const GetStartedScreen = () => {
   useEffect(() => {
     async function prepare() {
       try {
-        // Reduce initial delay to 1 second
+        // Remove the setBackgroundColorAsync call since it's not supported
+        // Add a small delay to ensure smooth transition
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (e) {
         console.warn(e);
@@ -136,10 +137,6 @@ const GetStartedScreen = () => {
             <Text className="text-white font-semibold">content effortlessly.</Text>
           </Text>
         </View>
-
-
-
-
 
         {/* Buttons Section */}
         <View className="gap-5 px-8 pb-16 mb-8">
