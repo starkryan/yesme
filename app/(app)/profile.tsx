@@ -20,6 +20,13 @@ const Profile = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-[#343541]">
+      {/* Header */}
+      <View className="bg-[#2A2B32] px-6 py-4 border-b border-gray-700">
+        <Text className="text-2xl font-bold text-white">Profile</Text>
+        <Text className="text-gray-400 mt-1">Manage your account settings</Text>
+      </View>
+
+      {/* Content */}
       <View className="flex-1 items-center justify-center space-y-8 px-4 py-10">
         {/* Profile Picture */}
         <View className="relative">

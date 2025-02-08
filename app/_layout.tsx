@@ -83,13 +83,13 @@ export default function RootLayout() {
         }}
         textStyle={{
           color: '#ffffff',
-          fontSize: 14,
+          fontSize: 12,
           fontFamily: 'Inter',
           flexWrap: 'wrap',
-          lineHeight: 20,
+          lineHeight: 16,
           textAlign: 'left',
           fontWeight: '500',
-
+          maxWidth: '95%',
         }}
         successColor="#10a37f"
         errorColor="#ef4444"

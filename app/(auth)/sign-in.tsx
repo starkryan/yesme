@@ -382,6 +382,19 @@ export default function SignInScreen() {
     };
   }, []);
 
+  const handleBack = () => {
+    if (showPasswordModal || showOTPModal) {
+      // If modals are open, close them first
+      setShowPasswordModal(false);
+      setShowOTPModal(false);
+      setPassword('');
+      setCode('');
+    } else {
+      // Navigate to the previous screen
+      router.push('/');  // or your desired landing/home route
+    }
+  };
+
   if (!isLoaded) {
     return (
       <View className="flex-1 items-center justify-center bg-[#343541]">
@@ -412,7 +425,7 @@ export default function SignInScreen() {
             ref={scrollViewRef}>
             <View className="pt-12 px-4 mb-4">
               <TouchableOpacity 
-                onPress={() => router.back()}
+                onPress={handleBack}
                 className="flex-row items-center p-2"
               >
                 <FontAwesome name="arrow-left" size={16} color="#9ca3af" />

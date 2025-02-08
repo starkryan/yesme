@@ -24,6 +24,7 @@ const GetStartedScreen = () => {
   const [hasAnimated, setHasAnimated] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
   const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
 
   // Keep only the creative image animation
   const creativeImageAnim = useRef(new Animated.Value(0)).current;

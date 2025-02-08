@@ -135,7 +135,7 @@ const SignUpScreen: React.FC = () => {
       setVerificationError('');
       setOtpAttempts(0);
     } else {
-      router.back();
+      router.push('/');
     }
   };
 
