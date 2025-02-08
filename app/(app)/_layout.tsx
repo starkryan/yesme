@@ -2,9 +2,9 @@ import { useAuth, useClerk } from '@clerk/clerk-expo';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { Home, User, Menu, LogOut, X, PenSquare } from 'lucide-react-native';
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, ActivityIndicator, SafeAreaView } from 'react-native';
 import Modal from 'react-native-modal';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 import { AlignLeft } from 'lucide-react-native';
 
@@ -56,7 +56,7 @@ const LayoutGroup = () => {
   ];
 
   return (
-    <>
+    <SafeAreaView className="flex-1">
       {/* Header */}
       <View className="h-14 flex-row items-center justify-between px-4 bg-[#343541] border-b border-gray-600">
         <TouchableOpacity 
@@ -89,11 +89,14 @@ const LayoutGroup = () => {
         className="absolute left-0 top-0 h-full w-[280px] bg-[#40414F] border-r-2 border-gray-600 shadow-xl shadow-black/50"
         style={{ transform: [{ translateX: slideAnim }] }}
       >
-        <SafeAreaView className="flex-1">
+        <View className="flex-1">
           <View className="flex-row items-center justify-between p-4 border-b border-gray-600">
             <Text className="text-lg font-semibold text-white">Menu</Text>
             <TouchableOpacity 
+
               onPress={toggleSidebar}
+
+
               className="p-1 active:opacity-70"
             >
               <X size={24} color="#fff" />
@@ -125,8 +128,9 @@ const LayoutGroup = () => {
               <Text className="ml-3 text-red-500 text-base font-medium">Sign Out</Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
       </Animated.View>
+
 
       {/* Modal */}
       <Modal
@@ -167,7 +171,7 @@ const LayoutGroup = () => {
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 };
 

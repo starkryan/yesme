@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useState, useRef } from "react";
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -15,16 +15,12 @@ import {
 import Modal from "react-native-modal";
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
-
 const GetStartedScreen = () => {
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const [hasAnimated, setHasAnimated] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
   const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
-  const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
 
   // Keep only the creative image animation
   const creativeImageAnim = useRef(new Animated.Value(0)).current;
@@ -32,9 +28,7 @@ const GetStartedScreen = () => {
   useEffect(() => {
     async function prepare() {
       try {
-        // Remove the setBackgroundColorAsync call since it's not supported
-        // Add a small delay to ensure smooth transition
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -45,21 +39,11 @@ const GetStartedScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (appIsReady) {
-      async function hideSplash() {
-        try {
-          await SplashScreen.hideAsync();
-          if (isSignedIn) {
-            router.replace("/(app)");
-          } else if (!hasAnimated) {
-            startAnimation();
-            setHasAnimated(true);
-          }
-        } catch (e) {
-          console.warn(e);
-        }
-      }
-      hideSplash();
+    if (appIsReady && isSignedIn) {
+      router.replace("/(app)");
+    } else if (appIsReady && !hasAnimated) {
+      startAnimation();
+      setHasAnimated(true);
     }
   }, [appIsReady, isSignedIn, hasAnimated]);
 

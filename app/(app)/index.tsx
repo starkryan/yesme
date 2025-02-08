@@ -20,7 +20,7 @@ import {
   Copy,
   Share2
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import {
   KeyboardAvoidingView,
   Alert,
   SafeAreaView,
+  RefreshControl
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { Toast } from 'toastify-react-native';
@@ -383,6 +384,47 @@ const MainPage = () => {
     }
   };
 
+  const [isNetworkError, setIsNetworkError] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Add network error handling
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      // Your network request here
+      setIsNetworkError(false);
+    } catch (error) {
+      Toast.error('Network error. Please check your connection.');
+      setIsNetworkError(true);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // Add network error UI
+  if (isNetworkError) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#343541] px-4">
+        <Text className="text-white text-lg text-center mb-4">
+          Unable to connect to the server
+        </Text>
+        <TouchableOpacity
+          onPress={handleRetry}
+          className="flex-row items-center space-x-2 bg-[#10a37f] px-6 py-3 rounded-xl"
+        >
+          {isRetrying ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <RefreshCw size={20} color="white" />
+              <Text className="text-white font-medium">Retry</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   // Add loading state check
   if (!isLoaded) {
     return (
@@ -410,7 +452,15 @@ const MainPage = () => {
           contentContainerStyle={{
             flexGrow: 1,
             paddingBottom: 40,
-          }}>
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              tintColor="#10a37f"
+              colors={['#10a37f']}
+            />
+          }>
           {/* Updated Header */}
           <View className="border-b border-gray-700 bg-transparent px-6 py-4">
             <Text className="text-2xl font-bold text-white">YouTube Script Generator</Text>

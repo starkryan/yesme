@@ -47,12 +47,30 @@
         "backgroundColor": "#343541",
         "monochromeImage": "./assets/adaptive-icon.png"
       },
-      "icon": "./assets/icon.png"
+      "icon": "./assets/icon.png",
+      "splash": {
+        "backgroundColor": "#343541"
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "package": "com.lemi.app",
+      "versionCode": 1
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/your-project-id"
     },
     "extra": {
       "GOOGLE_GEMINI_API_KEY": "AIzaSyAs4vFUhoajF79bzBdpP1fgVNgPa8whAEU",
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id"
       }
     }
   }
