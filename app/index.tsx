@@ -10,7 +10,10 @@ import {
   SafeAreaView,
   Image,
   Animated,
+  ScrollView,
 } from "react-native";
+import Modal from "react-native-modal";
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -20,6 +23,7 @@ const GetStartedScreen = () => {
   const router = useRouter();
   const [hasAnimated, setHasAnimated] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
 
   // Keep only the creative image animation
   const creativeImageAnim = useRef(new Animated.Value(0)).current;
@@ -120,9 +124,22 @@ const GetStartedScreen = () => {
           </Text>
 
           <Text className="text-center text-lg text-gray-300 px-4 leading-7">
-            Your AI-powered <Text className="text-red-400 font-semibold">YouTube</Text> script writing assistant. Create engaging <Text className="text-white font-semibold">content effortlessly.</Text>
+            <Text>Your AI-powered </Text>
+            <MaterialCommunityIcons 
+              name="youtube" 
+              size={24} 
+              color="red" 
+              style={{ verticalAlign: 'middle' }}
+            />
+            <Text className="text-red-500 font-semibold"> YouTube </Text>
+            <Text>script writing assistant. Create engaging </Text>
+            <Text className="text-white font-semibold">content effortlessly.</Text>
           </Text>
         </View>
+
+
+
+
 
         {/* Buttons Section */}
         <View className="gap-5 px-8 pb-16 mb-8">
@@ -147,8 +164,122 @@ const GetStartedScreen = () => {
               </Text>
             </Pressable>
           </Link>
+
+          <Text className="text-center text-sm text-gray-400">
+            By continuing, you agree to our{' '}
+            <Text 
+              className="text-[#10a37f]" 
+              onPress={() => setPrivacyModalVisible(true)}
+            >
+              Privacy Policy
+            </Text>
+          </Text>
         </View>
       </View>
+
+      <Modal
+        isVisible={isPrivacyModalVisible}
+        onBackdropPress={() => setPrivacyModalVisible(false)}
+        onBackButtonPress={() => setPrivacyModalVisible(false)}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropOpacity={0.5}
+      >
+        <View className="bg-[#343541] rounded-2xl p-6" style={{ maxHeight: '80%' }}>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-xl font-bold text-white">Terms & Privacy Policy</Text>
+            <Pressable onPress={() => setPrivacyModalVisible(false)}>
+              <FontAwesome name="times" size={24} color="#9ca3af" />
+            </Pressable>
+          </View>
+          
+          <ScrollView 
+            className="flex-grow"
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          >
+            <Text className="text-gray-300 mb-4">
+              Last updated: {new Date().toLocaleDateString()}
+            </Text>
+
+            <Text className="text-gray-300 mb-4">
+              Welcome to Lemi. By using our services, you agree to these terms and our privacy practices.
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">1. Information Collection</Text>
+            <Text className="text-gray-300 mb-4">
+              • Personal Information: Email, name, and authentication details{'\n'}
+              • Usage Data: App interaction patterns and preferences{'\n'}
+              • Generated Content: Scripts and creative materials{'\n'}
+              • Device Information: OS, device type, and app version{'\n'}
+              • Analytics: Performance and crash reports
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">2. Data Usage & Processing</Text>
+            <Text className="text-gray-300 mb-4">
+              • Service Delivery: Providing and improving AI script generation{'\n'}
+              • Personalization: Customizing content recommendations{'\n'}
+              • Analytics: Understanding user behavior and preferences{'\n'}
+              • Communication: Updates, support, and marketing (with consent){'\n'}
+              • Legal Compliance: Meeting regulatory requirements
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">3. Content Rights & AI Usage</Text>
+            <Text className="text-gray-300 mb-4">
+              • You retain ownership of your generated content{'\n'}
+              • Grant us license to process and store your content{'\n'}
+              • AI models are trained on anonymized data{'\n'}
+              • Content moderation policies apply{'\n'}
+              • Fair usage limits may be implemented
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">4. Security Measures</Text>
+            <Text className="text-gray-300 mb-4">
+              • SSL/TLS encryption for data transmission{'\n'}
+              • Regular security audits and penetration testing{'\n'}
+              • Access controls and authentication protocols{'\n'}
+              • Data backup and disaster recovery plans{'\n'}
+              • Incident response procedures
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">5. User Rights & Controls</Text>
+            <Text className="text-gray-300 mb-4">
+              • Access and download your data{'\n'}
+              • Request data modification or deletion{'\n'}
+              • Opt-out of non-essential data collection{'\n'}
+              • Cancel subscription and export content{'\n'}
+              • Lodge privacy complaints
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">6. Third-Party Services</Text>
+            <Text className="text-gray-300 mb-4">
+              • Authentication providers{'\n'}
+              • Analytics services{'\n'}
+              • Cloud storage providers{'\n'}
+              • Payment processors
+            </Text>
+
+            <Text className="text-lg font-semibold mb-2 text-white">7. Contact Information</Text>
+            <Text className="text-gray-300 mb-4">
+              For privacy inquiries:{'\n'}
+              Email: privacy@lemi.ai{'\n'}
+              Support: support@lemi.ai{'\n'}
+              Address: [Your Company Address]
+            </Text>
+
+            <Text className="text-gray-300 mt-4 italic">
+              This policy is subject to changes. Users will be notified of significant updates.
+            </Text>
+          </ScrollView>
+          
+          <Pressable
+            className="w-full rounded-xl bg-[#10a37f] p-4 mt-4 shadow-sm active:bg-[#0e906f]"
+            onPress={() => setPrivacyModalVisible(false)}
+          >
+            <Text className="text-center text-lg font-semibold text-white">I Understand</Text>
+          </Pressable>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

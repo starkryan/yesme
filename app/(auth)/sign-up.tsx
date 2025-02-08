@@ -127,6 +127,18 @@ const SignUpScreen: React.FC = () => {
   const [otpAttempts, setOtpAttempts] = React.useState(0);
   const MAX_OTP_ATTEMPTS = 3;
 
+  // Add back button handler
+  const handleBack = () => {
+    if (pendingVerification) {
+      setPendingVerification(false);
+      setCode('');
+      setVerificationError('');
+      setOtpAttempts(0);
+    } else {
+      router.back();
+    }
+  };
+
   // Add real-time email validation
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -395,7 +407,7 @@ const SignUpScreen: React.FC = () => {
   // Update verification screen with proper OTP implementation
   const renderVerificationScreen = () => (
     <View className="px-8">
-      <View className="mb-10">
+      <View className="mb-8">
         <Text className="mb-3 text-center text-3xl font-bold text-white">
           Verify Email
         </Text>
@@ -412,21 +424,23 @@ const SignUpScreen: React.FC = () => {
           theme={{
             containerStyle: {
               width: '100%',
-              gap: 8,
+              gap: 12,
             },
             inputsContainerStyle: {
-              marginBottom: 20,
+              marginBottom: 16,
             },
             pinCodeContainerStyle: {
               borderWidth: 2,
               borderColor: verificationError ? '#ef4444' : '#4b5563',
               borderRadius: 12,
               backgroundColor: 'transparent',
-              height: 52,
+              height: 56,
+              width: 45,
             },
             pinCodeTextStyle: {
               color: '#ffffff',
-              fontSize: 20,
+              fontSize: 24,
+              fontWeight: '600',
             },
             focusStickStyle: {
               backgroundColor: '#10a37f',
@@ -533,18 +547,34 @@ const SignUpScreen: React.FC = () => {
   const resendVerificationCode = async () => {
     if (!isLoaded || isLoading || !canResendCode) return;
 
+    if (resendAttempts >= MAX_RESEND_ATTEMPTS) {
+      Toast.error(`Maximum resend attempts reached. Please wait ${LONG_COOLDOWN_MINUTES} minutes.`, 'top');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      
+      // Reset verification state
       setCode('');
       otpRef.current?.clear();
-      setOtpAttempts(0); // Reset OTP attempts when requesting new code
-      Toast.success('Verification code resent successfully', 'top');
-
+      setOtpAttempts(0);
+      setVerificationError('');
+      
+      // Update resend attempts and timer
       const newAttempts = resendAttempts + 1;
       setResendAttempts(newAttempts);
       setLastResendTimestamp(Date.now());
       setCanResendCode(false);
+      
+      const remainingAttempts = MAX_RESEND_ATTEMPTS - newAttempts;
+      Toast.success(
+        `Verification code resent successfully. ${remainingAttempts} ${
+          remainingAttempts === 1 ? 'attempt' : 'attempts'
+        } remaining`,
+        'top'
+      );
       
       if (newAttempts >= MAX_RESEND_ATTEMPTS) {
         setResendTimer(LONG_COOLDOWN_MINUTES * 60);
@@ -552,8 +582,8 @@ const SignUpScreen: React.FC = () => {
         setResendTimer(30);
       }
     } catch (err: any) {
-      Toast.error('Failed to resend verification code', 'top');
       console.error('Error resending verification code:', err);
+      Toast.error('Failed to resend verification code. Please try again later.', 'top');
     } finally {
       setIsLoading(false);
     }
@@ -573,7 +603,7 @@ const SignUpScreen: React.FC = () => {
 
     setIsSubmitAttempted(true);
     
-    // Validate email and password
+    // Enhanced email validation
     if (!validateEmail(emailAddress)) {
       Toast.error('Please enter a valid email address', 'top');
       emailInputRef.current?.focus();
@@ -598,17 +628,43 @@ const SignUpScreen: React.FC = () => {
         password,
       });
 
-      // Send email verification code
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      // Send email verification code with enhanced error handling
+      await sendVerificationCode();
       
-      // Set pending verification to true
-      setPendingVerification(true);
-      Toast.success('Verification code sent to your email', 'top');
     } catch (err: any) {
       console.error('Error during sign up:', err);
-      Toast.error(err.errors?.[0]?.message || 'Sign up failed. Please try again.', 'top');
+      
+      // Enhanced error messaging
+      let errorMessage = 'Sign up failed. Please try again.';
+      if (err.errors?.[0]?.message) {
+        if (err.errors[0].message.includes('email_address must be')) {
+          errorMessage = 'Please enter a valid email address';
+          emailInputRef.current?.focus();
+        } else {
+          errorMessage = err.errors[0].message;
+        }
+      }
+      Toast.error(errorMessage, 'top');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Add new function to handle verification code sending
+  const sendVerificationCode = async () => {
+    try {
+      if (!signUp) throw new Error("Sign up not initialized");
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setPendingVerification(true);
+      setResendAttempts(0); // Reset resend attempts
+      setLastResendTimestamp(Date.now());
+      setCanResendCode(false);
+      setResendTimer(30);
+      Toast.success('Verification code sent to your email', 'top');
+    } catch (err: any) {
+      console.error('Error sending verification code:', err);
+      Toast.error('Failed to send verification code. Please try again.', 'top');
+      throw err; // Re-throw to be handled by the caller
     }
   };
 
@@ -631,14 +687,28 @@ const SignUpScreen: React.FC = () => {
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              <View className="flex-1 justify-center py-8">
+              <View className="pt-12 px-4 mb-4">
+                <TouchableOpacity 
+                  onPress={handleBack}
+                  className="flex-row items-center p-2"
+                >
+                  <FontAwesome name="arrow-left" size={16} color="#9ca3af" />
+                  <Text className="ml-2 text-gray-300 text-base">Back</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-1 justify-center py-6">
                 {pendingVerification ? (
                   renderVerificationScreen()
                 ) : (
                   <>
-                    <View className="mb-10 px-8">
-                      <Text className="mb-3 text-center text-3xl font-bold text-white">Sign up</Text>
-                      <Text className="text-center text-base text-gray-300">to continue to Lemi</Text>
+                    <View className="mb-8 px-8">
+                      <Text className="mb-2 text-center text-3xl font-bold text-white">
+                        Sign up
+                      </Text>
+                      <Text className="text-center text-base text-gray-300">
+                        to continue to Lemi
+                      </Text>
                     </View>
 
                     {/* Social Login Button */}
@@ -671,15 +741,16 @@ const SignUpScreen: React.FC = () => {
                     <View className="space-y-5 px-8">
                       {renderEmailInput()}
 
-                      <View>
-                        <Text className="mb-2 mt-2 font-medium text-gray-300">Password</Text>
-                        <View className="relative">
+                      <View className="mb-2">
+                        <Text className="mb-2 font-medium text-gray-300">Password</Text>
+                        <View className="relative mb-1">
                           <TextInput
                             ref={passwordInputRef}
-                            className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 pr-12 text-white ${!isPasswordValid && password.length > 0
+                            className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 pr-12 text-white ${
+                              !isPasswordValid && password.length > 0
                                 ? 'border-red-500'
                                 : 'border-gray-600'
-                              }`}
+                            }`}
                             value={password}
                             placeholder="Enter password"
                             placeholderTextColor="#9ca3af"
@@ -690,7 +761,7 @@ const SignUpScreen: React.FC = () => {
                             <FontAwesome name="lock" size={20} color="#9ca3af" />
                           </View>
                           <TouchableOpacity
-                            className="absolute right-4 top-4"
+                            className="absolute right-4 top-4 p-1"
                             onPress={() => setShowPassword(!showPassword)}>
                             <FontAwesome
                               name={showPassword ? 'eye-slash' : 'eye'}

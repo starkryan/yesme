@@ -410,9 +410,19 @@ export default function SignInScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             ref={scrollViewRef}>
-            <View className="flex-1 justify-center py-8">
-              <View className="mb-10 px-8">
-                <Text className="mb-3 text-center text-3xl font-bold text-white">Sign in</Text>
+            <View className="pt-12 px-4 mb-4">
+              <TouchableOpacity 
+                onPress={() => router.back()}
+                className="flex-row items-center p-2"
+              >
+                <FontAwesome name="arrow-left" size={16} color="#9ca3af" />
+                <Text className="ml-2 text-gray-300 text-base">Back</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-1 justify-center py-6">
+              <View className="mb-8 px-8">
+                <Text className="mb-2 text-center text-3xl font-bold text-white">Sign in</Text>
                 <Text className="text-center text-base text-gray-300">to continue to Lemi</Text>
               </View>
 
@@ -442,32 +452,39 @@ export default function SignInScreen() {
                 <View className="h-[1px] flex-1 bg-gray-600" />
               </View>
 
-              {/* Email Input */}
+              {/* Form */}
               <View className="space-y-5 px-8">
                 <View>
                   <Text className="mb-2 font-medium text-gray-300">Email address</Text>
                   <View className="relative">
                     <TextInput
-                      className="rounded-xl border-2 border-gray-600 bg-transparent p-4 pl-12 text-white"
+                      className={`w-full rounded-xl border-2 bg-transparent p-4 pl-12 text-white ${
+                        !isValidEmail && emailAddress.length > 0 ? 'border-red-500' : 'border-gray-600'
+                      }`}
                       autoCapitalize="none"
                       value={emailAddress}
                       placeholder="Enter email"
                       placeholderTextColor="#9ca3af"
-                      onChangeText={(text) => handleEmailChange(text.toLowerCase())}
+                      onChangeText={handleEmailChange}
                       keyboardType="email-address"
                       autoCorrect={false}
                     />
                     <View className="absolute left-4 top-4">
-                      <FontAwesome name="envelope-o" size={20} color="#9ca3af" />
+                      <FontAwesome name="envelope" size={20} color="#9ca3af" />
                     </View>
                   </View>
+                  {!isValidEmail && emailAddress.length > 0 && (
+                    <Text className="mt-2 text-sm text-red-500">
+                      Please enter a valid email address
+                    </Text>
+                  )}
                 </View>
               </View>
 
               {/* Continue Button */}
               <View className="mt-8 px-8">
                 <TouchableOpacity
-                  className="rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
+                  className="w-full rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
                   onPress={onEmailSubmit}
                   disabled={isLoading}>
                   {isLoading ? (
@@ -478,7 +495,7 @@ export default function SignInScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Sign Up Link */}
+              {/* Sign Up and Forgot Password Links */}
               <View className="mt-6 flex-row justify-center">
                 <Text className="text-gray-300">Don't have an account? </Text>
                 <Pressable onPress={navigateToSignUp}>
@@ -486,13 +503,11 @@ export default function SignInScreen() {
                 </Pressable>
               </View>
 
-              {/* Forgot Password Link */}
               <View className="mt-4 flex-row justify-center">
                 <Pressable onPress={() => router.push('/(auth)/reset-password')}>
                   <Text className="font-semibold text-[#10a37f]">Forgot password?</Text>
                 </Pressable>
               </View>
-
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
