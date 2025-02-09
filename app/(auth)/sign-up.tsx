@@ -1,5 +1,5 @@
 import { useSignUp } from '@clerk/clerk-expo';
-import { FontAwesome } from '@expo/vector-icons';
+
 import { Link, useRouter } from 'expo-router';
 import * as React from 'react';
 import {
@@ -18,14 +18,14 @@ import {
   GestureResponderEvent,
   LayoutAnimation,
 } from 'react-native';
-import { Toast } from 'toastify-react-native';
+import { Toast } from '../Toast';
 
 import { OtpInput } from "react-native-otp-entry";
 
-
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, CheckCircle2, Circle } from 'lucide-react-native';
 
 import { useOAuthFlow } from '../../utils/oauth';
-import styles from 'toastify-react-native/components/styles';
+
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -127,6 +127,26 @@ const SignUpScreen: React.FC = () => {
   // Add new state for OTP attempts
   const [otpAttempts, setOtpAttempts] = React.useState(0);
   const MAX_OTP_ATTEMPTS = 3;
+
+  // Add keyboard height state for Android
+  const [keyboardHeight, setKeyboardHeight] = React.useState(0);
+
+  // Add keyboard listeners for Android
+  React.useEffect(() => {
+    if (Platform.OS === 'android') {
+      const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      });
+      const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+        setKeyboardHeight(0);
+      });
+
+      return () => {
+        showSubscription.remove();
+        hideSubscription.remove();
+      };
+    }
+  }, []);
 
   // Add back button handler
   const handleBack = () => {
@@ -231,11 +251,12 @@ const SignUpScreen: React.FC = () => {
     try {
       await handleOAuth();
     } catch (err) {
-      Toast.error('Google sign-up failed. Please try again.', 'top');
+      Toast.error('Google sign-up failed. Please try again.');
       console.error('OAuth error:', err);
     } finally {
       setIsGoogleLoading(false);
     }
+
   }, [handleOAuth, isGoogleLoading]);
 
   // Enhanced verification code handling
@@ -261,8 +282,9 @@ const SignUpScreen: React.FC = () => {
       setVerificationError(errorMessage);
       
       // Use Clerk's error messages directly
-      Toast.error(errorMessage, 'top');
+      Toast.error(errorMessage);
       
+
       // Clear invalid code
       setCode('');
       otpRef.current?.clear();
@@ -316,7 +338,7 @@ const SignUpScreen: React.FC = () => {
     };
 
     return (
-      <View className="mt-2">
+      <View className="mt-1.5">
         <View className="flex-row space-x-1">
           {[1, 2, 3, 4, 5].map((index) => (
             <View
@@ -329,19 +351,19 @@ const SignUpScreen: React.FC = () => {
           ))}
         </View>
         {password.length > 0 && (
-          <View className="mt-3">
-            <Text className={`text-sm font-medium mb-1.5 ${getTextColor(passwordStrength.score)}`}>
+          <View className="mt-2">
+            <Text className={`text-xs font-medium mb-1 ${getTextColor(passwordStrength.score)}`}>
               {getStrengthText(passwordStrength.score)} Password
             </Text>
-            <View className="flex-row flex-wrap gap-x-4 gap-y-1">
+            <View className="flex-row flex-wrap gap-2">
               {Object.entries(passwordStrength.requirements).map(([key, met]) => (
                 <View key={key} className="flex-row items-center">
-                  <FontAwesome
-                    name={met ? 'check-circle' : 'circle-o'}
-                    size={12}
-                    color={met ? '#10a37f' : '#4b5563'}
-                  />
-                  <Text className={`text-sm ml-1.5 ${met ? 'text-green-500' : 'text-gray-400'}`}>
+                  {met ? (
+                    <CheckCircle2 size={12} color="#10a37f" />
+                  ) : (
+                    <Circle size={12} color="#4b5563" />
+                  )}
+                  <Text className={`text-xs ml-1 ${met ? 'text-green-500' : 'text-gray-400'}`}>
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </Text>
                 </View>
@@ -374,7 +396,7 @@ const SignUpScreen: React.FC = () => {
           onSubmitEditing={() => passwordInputRef.current?.focus()}
         />
         <View className="absolute left-4 top-[17px]">
-          <FontAwesome name="envelope" size={20} color="#9ca3af" />
+          <Mail size={20} color="#9ca3af" />
         </View>
         {isCheckingEmail && (
           <View className="absolute right-4 top-4">
@@ -549,9 +571,10 @@ const SignUpScreen: React.FC = () => {
     if (!isLoaded || isLoading || !canResendCode) return;
 
     if (resendAttempts >= MAX_RESEND_ATTEMPTS) {
-      Toast.error(`Maximum resend attempts reached. Please wait ${LONG_COOLDOWN_MINUTES} minutes.`, 'top');
+      Toast.error(`Maximum resend attempts reached. Please wait ${LONG_COOLDOWN_MINUTES} minutes.`);
       return;
     }
+
 
     setIsLoading(true);
     try {
@@ -573,8 +596,7 @@ const SignUpScreen: React.FC = () => {
       Toast.success(
         `Verification code resent successfully. ${remainingAttempts} ${
           remainingAttempts === 1 ? 'attempt' : 'attempts'
-        } remaining`,
-        'top'
+        } remaining`
       );
       
       if (newAttempts >= MAX_RESEND_ATTEMPTS) {
@@ -584,10 +606,11 @@ const SignUpScreen: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Error resending verification code:', err);
-      Toast.error('Failed to resend verification code. Please try again later.', 'top');
+      Toast.error('Failed to resend verification code. Please try again later.');
     } finally {
       setIsLoading(false);
     }
+
   };
 
   // Helper function to format time
@@ -606,21 +629,24 @@ const SignUpScreen: React.FC = () => {
     
     // Enhanced email validation
     if (!validateEmail(emailAddress)) {
-      Toast.error('Please enter a valid email address', 'top');
+      Toast.error('Please enter a valid email address');
       emailInputRef.current?.focus();
       return;
     }
 
+
     if (emailExists) {
-      Toast.error('Email already exists. Please sign in instead.', 'top');
+      Toast.error('Email already exists. Please sign in instead.');
       return;
     }
 
+
     if (!validatePassword(password)) {
-      Toast.error('Please enter a valid password', 'top');
+      Toast.error('Please enter a valid password');
       passwordInputRef.current?.focus();
       return;
     }
+
 
     setIsLoading(true);
     try {
@@ -645,10 +671,11 @@ const SignUpScreen: React.FC = () => {
           errorMessage = err.errors[0].message;
         }
       }
-      Toast.error(errorMessage, 'top');
+      Toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+
   };
 
   // Add new function to handle verification code sending
@@ -661,12 +688,14 @@ const SignUpScreen: React.FC = () => {
       setLastResendTimestamp(Date.now());
       setCanResendCode(false);
       setResendTimer(30);
-      Toast.success('Verification code sent to your email', 'top');
+      Toast.success('Verification code sent to your email');
+
     } catch (err: any) {
       console.error('Error sending verification code:', err);
-      Toast.error('Failed to send verification code. Please try again.', 'top');
+      Toast.error('Failed to send verification code. Please try again.');
       throw err; // Re-throw to be handled by the caller
     }
+
   };
 
   if (!isLoaded) {
@@ -679,40 +708,48 @@ const SignUpScreen: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="flex-1 bg-[#343541]">
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'android' ? -keyboardHeight : 0}
+        className="flex-1"
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="flex-1 bg-[#343541]">
             <ScrollView
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}>
-              <View className="pt-5 px-4 mb-2">
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="pt-4 px-4 mb-2">
                 <TouchableOpacity 
                   onPress={handleBack}
-                  className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12"
+                  className="flex-row items-center p-2 rounded-full bg-gray-600/30 w-10"
                 >
-                  <FontAwesome name="arrow-left" size={18} color="#9ca3af" />
+                  <ArrowLeft size={16} color="#9ca3af" />
                 </TouchableOpacity>
               </View>
 
-              <View className="flex-1 justify-center py-4">
+              <View 
+                className="flex-1 justify-center py-2"
+                style={Platform.OS === 'android' ? {
+                  paddingBottom: keyboardHeight > 0 ? keyboardHeight : 0
+                } : {}}
+              >
                 {pendingVerification ? (
                   renderVerificationScreen()
                 ) : (
                   <>
-                    <View className="mb-8 px-8">
-                      <Text className="mb-2 text-center text-3xl font-bold text-white">
+                    <View className="mb-6 px-6">
+                      <Text className="mb-1.5 text-center text-2xl font-bold text-white">
                         Create Account
                       </Text>
-                      <Text className="text-center text-base text-gray-300">
+                      <Text className="text-center text-sm text-gray-300">
                         Get started with Lemi
                       </Text>
                     </View>
 
                     {/* Social Login Button */}
-                    <View className="mb-8 px-8">
+                    <View className="mb-6 px-6">
                       <TouchableOpacity
                         onPress={onSelectOAuth}
                         disabled={isGoogleLoading || isLoading}
@@ -731,14 +768,14 @@ const SignUpScreen: React.FC = () => {
                     </View>
 
                     {/* Divider */}
-                    <View className="mb-8 flex-row items-center px-8">
+                    <View className="mb-6 flex-row items-center px-6">
                       <View className="h-px flex-1 bg-gray-600" />
                       <Text className="mx-3 text-gray-300 text-sm">OR</Text>
                       <View className="h-px flex-1 bg-gray-600" />
                     </View>
 
                     {/* Form */}
-                    <View className="space-y-6 px-8">
+                    <View className="space-y-4 px-6">
                       {renderEmailInput()}
 
                       <View className="mb-2">
@@ -758,31 +795,25 @@ const SignUpScreen: React.FC = () => {
                             onChangeText={onPasswordChange}
                           />
                           <View className="absolute left-4 top-4">
-                            <FontAwesome name="lock" size={20} color="#9ca3af" />
+                            <Lock size={20} color="#9ca3af" />
                           </View>
                           <TouchableOpacity
                             className="absolute right-4 top-4 p-1"
                             onPress={() => setShowPassword(!showPassword)}>
-                            <FontAwesome
-                              name={showPassword ? 'eye-slash' : 'eye'}
-                              size={20}
-                              color="#9ca3af"
-                            />
+                            {showPassword ? (
+                              <EyeOff size={20} color="#9ca3af" />
+                            ) : (
+                              <Eye size={20} color="#9ca3af" />
+                            )}
                           </TouchableOpacity>
                         </View>
-                        {/* {!isPasswordValid && password.length > 0 && (
-                          <Text className="mt-2 text-sm text-red-500">
-                            Password must contain at least 8 characters, including uppercase,
-                            lowercase, number, and special character
-                          </Text>
-                        )} */}
                       </View>
 
                       {renderPasswordStrength()}
                     </View>
 
                     {/* Sign Up Button */}
-                    <View className="mt-8 px-8">
+                    <View className="mt-6 px-6">
                       <TouchableOpacity
                         className="w-full rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
                         onPress={onSignUpPress}
@@ -790,7 +821,7 @@ const SignUpScreen: React.FC = () => {
                         {isLoading ? (
                           <ActivityIndicator color="white" />
                         ) : (
-                          <Text className="text-center text-lg font-semibold text-white">
+                          <Text className="text-center text-base font-semibold text-white">
                             Create Account
                           </Text>
                         )}
@@ -798,7 +829,7 @@ const SignUpScreen: React.FC = () => {
                     </View>
 
                     {/* Sign In Link */}
-                    <View className="mt-6 flex-row justify-center">
+                    <View className="mt-4 flex-row justify-center">
                       <Text className="text-gray-300">Already have an account? </Text>
                       <Pressable onPress={navigateToSignIn}>
                         <Text className="font-semibold text-[#10a37f]">Sign in</Text>
@@ -808,9 +839,9 @@ const SignUpScreen: React.FC = () => {
                 )}
               </View>
             </ScrollView>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </ErrorBoundary>
   );
 };

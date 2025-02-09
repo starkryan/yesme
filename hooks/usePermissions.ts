@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import { Platform, Linking, Alert } from 'react-native';
-import { Toast } from 'toastify-react-native';
-import { PERMISSION_MESSAGES } from '~/utils/permissionMessages';
+import { Toast } from '@/app/Toast';
+import { PERMISSION_MESSAGES } from '@/utils/permissionMessages';
 
 export const usePermissions = () => {
   const [permissionStatus, setPermissionStatus] = useState<Record<string, boolean>>({});

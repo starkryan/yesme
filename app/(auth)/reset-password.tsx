@@ -15,10 +15,11 @@ import {
   ActivityIndicator,
   Pressable,
 } from 'react-native';
-import { Toast } from 'toastify-react-native';
+import { Toast } from '../Toast';
 import { OtpInput } from "react-native-otp-entry";
 import Modal from 'react-native-modal';
 import * as SecureStore from 'expo-secure-store';
+
 
 const ForgotPassword = () => {
   const { signIn, isLoaded } = useSignIn();
@@ -104,16 +105,19 @@ const ForgotPassword = () => {
         nextHour.setHours(nextHour.getHours() + 1);
         setNextResetTime(nextHour);
       }
-      Toast.error('Too many reset attempts. Please try again in 1 hour.', 'top');
+      Toast.error('Too many reset attempts. Please try again in 1 hour.');
       return;
     }
 
+
     if (!validateEmail(emailAddress)) {
       setIsValidEmail(false);
-      Toast.error('Please enter a valid email address', 'top');
+      Toast.error('Please enter a valid email address');
       return;
     }
+
     setIsValidEmail(true);
+
     setIsLoading(true);
 
     try {
@@ -124,15 +128,20 @@ const ForgotPassword = () => {
 
       setShowOTPModal(true);
       startResendTimer();
-      Toast.success('OTP sent to your email', 'top');
+      Toast.success('OTP sent to your email');
+
       setResetAttempts((prev) => prev + 1);
+
     } catch (err: unknown) {
       if (err instanceof Error) {
         const clerkError = err as { errors?: Array<{ message: string }> };
-        Toast.error(clerkError.errors?.[0]?.message || err.message, 'top');
+        Toast.error(clerkError.errors?.[0]?.message || err.message);
+
       } else {
-        Toast.error('Failed to send OTP', 'top');
+        Toast.error('Failed to send OTP');
       }
+
+
     } finally {
       setIsLoading(false);
     }
@@ -147,9 +156,11 @@ const ForgotPassword = () => {
         nextHour.setHours(nextHour.getHours() + 1);
         setNextResetTime(nextHour);
       }
-      Toast.error('Too many reset attempts. Please try again in 1 hour.', 'top');
+      Toast.error('Too many reset attempts. Please try again in 1 hour.');
+
       return;
     }
+
 
     setIsLoading(true);
     try {
@@ -158,12 +169,16 @@ const ForgotPassword = () => {
         strategy: 'reset_password_email_code',
       });
       startResendTimer();
-      Toast.success('New OTP sent to your email', 'top');
+      Toast.success('New OTP sent to your email');
+
+
     } catch (err: unknown) {
       if (err instanceof Error) {
-        Toast.error((err as any).errors?.[0]?.message || err.message, 'top');
+        Toast.error((err as any).errors?.[0]?.message || err.message);
       } else {
-        Toast.error('Failed to resend OTP', 'top');
+        Toast.error('Failed to resend OTP');
+
+
       }
     } finally {
       setIsLoading(false);
@@ -174,14 +189,18 @@ const ForgotPassword = () => {
     if (!isLoaded) return;
 
     if (!validatePassword(password)) {
-      setIsValidPassword(false);
-      Toast.error('Password must meet all requirements', 'top');
+        setIsValidPassword(false);
+      Toast.error('Password must meet all requirements');
       return;
     }
+
+
     if (!code) {
-      Toast.error('Please enter the OTP', 'top');
+      Toast.error('Please enter the OTP');
       return;
+
     }
+
     setIsValidPassword(true);
     setIsLoading(true);
 
@@ -200,7 +219,9 @@ const ForgotPassword = () => {
         await SecureStore.deleteItemAsync('clerk-js-session-token');
         await SecureStore.deleteItemAsync('__clerk_client_jwt');
 
-        Toast.success('Password successfully updated! Please sign in with your new password', 'top');
+        Toast.success('Password successfully updated! Please sign in with your new password');
+
+
 
         setTimeout(() => {
           router.replace('/(auth)/sign-in');
@@ -209,10 +230,12 @@ const ForgotPassword = () => {
     } catch (err: unknown) {
       if (err instanceof Error) {
         const clerkError = err as { errors?: Array<{ message: string }> };
-        Toast.error(clerkError.errors?.[0]?.message || err.message, 'top');
+        Toast.error(clerkError.errors?.[0]?.message || err.message);
+
       } else {
-        Toast.error('Failed to reset password', 'top');
+        Toast.error('Failed to reset password');
       }
+
     } finally {
       setIsLoading(false);
     }

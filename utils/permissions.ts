@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as Permissions from 'expo-permissions';
 import { Platform } from 'react-native';
-import { Toast } from 'toastify-react-native';
+import { Toast } from '@/app/Toast';
 
 export const checkStoragePermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') return true;

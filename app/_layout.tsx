@@ -1,69 +1,28 @@
-import { tokenCache } from '~/utils/cache';
+import { tokenCache } from '@/utils/cache';
 import '../global.css';
 import 'react-native-url-polyfill/auto';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { getRandomValues as expoCryptoGetRandomValues } from 'expo-crypto';
 import { Slot, useRouter } from 'expo-router';
 import * as React from 'react';
+
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
-import ToastProvider, { Toast } from 'toastify-react-native';
+
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ErrorBoundary } from 'react-error-boundary';
+import ToastManager from './Toast/components/ToastManager';
+import { Toast } from './Toast';
 
 
-// At the top of the file, after imports
-const CONSTANTS = {
-  BACKGROUND_COLOR: '#343541',
-  ACCENT_COLOR: '#10a37f',
-  ERROR_COLOR: '#ef4444',
-  WARNING_COLOR: '#f59e0b',
-  TOAST_DURATION: 3000,
-  MAX_INIT_ATTEMPTS: 3,
-} as const;
 
-// Add this before RootLayoutContent
-const TOAST_CONFIG = {
-  width: 300,
-  height: 'auto',
-  duration: CONSTANTS.TOAST_DURATION,
-  position: 'top' as const,
-  animationIn: 'slideInDown',
-  animationOut: 'slideOutUp',
-  animationInTiming: 300,
-  animationOutTiming: 300,
-  showProgressBar: true,
-  style: {
-    backgroundColor: CONSTANTS.BACKGROUND_COLOR,
-    borderRadius: 12,
-
-    padding: 10,
-    marginTop: 10,
-    maxWidth: '90%',
-    borderWidth: 2,
-    borderColor: '#4b5563',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  textStyle: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontFamily: 'Inter',
-    flexWrap: 'wrap',
-    lineHeight: 16,
-    textAlign: 'left',
-    fontWeight: '500',
-    maxWidth: '95%',
-  },
-} as const;
 
 // Add after CONSTANTS
+
+
 const ERROR_MESSAGES = {
   NO_INTERNET: 'No internet connection. Some features may be limited.',
   BACK_ONLINE: 'Back online',
@@ -71,6 +30,8 @@ const ERROR_MESSAGES = {
   APP_START_ERROR: 'Unable to start the app. Please try again.',
   CHECK_CONNECTION: 'Please check your connection and try again',
 } as const;
+
+
 
 // Type for ErrorFallback props
 interface ErrorFallbackProps {
@@ -140,7 +101,7 @@ const RootLayoutContent = () => {
       if (mountedRef.current) {
         const isConnected = state.isConnected;
         setIsOffline(!isConnected);
-        
+
         if (!isConnected && !wasOffline.current) {
           Toast.error(ERROR_MESSAGES.NO_INTERNET);
           wasOffline.current = true;
@@ -158,7 +119,7 @@ const RootLayoutContent = () => {
 
   const handleNavigation = useCallback(async () => {
     if (!mountedRef.current) return;
-    
+
     setIsNavigating(true);
     try {
       await router.replace('/(app)');
@@ -184,7 +145,7 @@ const RootLayoutContent = () => {
 
         const state = await NetInfo.fetch();
         const isConnected = state.isConnected;
-        
+
         if (mountedRef.current) {
           setIsOffline(!isConnected);
           wasOffline.current = !isConnected;
@@ -199,7 +160,7 @@ const RootLayoutContent = () => {
         if (mountedRef.current) {
           setIsReady(true);
         }
-        
+
         await SplashScreen.hideAsync().catch(console.error);
 
         if (navigationTimeoutRef.current) {
@@ -269,8 +230,17 @@ const RootLayoutContent = () => {
       <SafeAreaView className="flex-1 bg-[#343541]" onLayout={onLayoutRootView}>
         <Slot />
       </SafeAreaView>
-      <ToastProvider {...TOAST_CONFIG} />
+      <ToastManager
+      theme="dark"
+      position="top"
+      positionValue={50}
+      width={320}
+      duration={3000}
+      showCloseIcon={true}
+      showProgressBar={true}
+      />
     </SafeAreaProvider>
+
   );
 };
 

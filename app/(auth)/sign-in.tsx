@@ -1,5 +1,4 @@
 import { useSignIn } from '@clerk/clerk-expo';
-import { FontAwesome } from '@expo/vector-icons';
 import { Link, Redirect, useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -17,7 +16,7 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import { Toast } from 'toastify-react-native';
+import { Toast } from '../Toast';
 import * as Clipboard from 'expo-clipboard';
 import { useRef } from 'react';
 import { debounce } from 'lodash';
@@ -26,6 +25,7 @@ import Modal from 'react-native-modal';
 
 import { useOAuthFlow } from '../../utils/oauth';
 import { OtpInput } from "react-native-otp-entry";
+import { ArrowLeft, X, Lock, Mail } from 'lucide-react-native';
 
 // Add ErrorBoundary component
 interface ErrorBoundaryProps {
@@ -111,10 +111,11 @@ export default function SignInScreen() {
     // Perform immediate validation check
     const isValid = validateEmail(emailAddress);
     if (!emailAddress || !isValid) {
-      Toast.error('Please enter a valid email address', 'top');
+      Toast.error('Please enter a valid email address');
       setIsValidEmail(isValid);
       return;
     }
+
 
     setIsLoading(true);
 
@@ -150,10 +151,11 @@ export default function SignInScreen() {
       if (errorMessage.toLowerCase().includes('no user found') || 
           errorMessage.toLowerCase().includes('user not found') ||
           errorMessage.toLowerCase().includes('invalid email address')) {
-        Toast.error('No account found with this email. Please sign up first.', 'top');
+        Toast.error('No account found with this email. Please sign up first.');
       } else {
-        Toast.error(errorMessage, 'top');
+        Toast.error(errorMessage);
       }
+
       console.log('Sign in error:', errorMessage);
     } finally {
       setIsLoading(false);
@@ -164,9 +166,10 @@ export default function SignInScreen() {
     if (!isLoaded) return;
     
     if (!password) {
-      Toast.error('Please enter your password', 'top');
+      Toast.error('Please enter your password');
       return;
     }
+
     setIsLoading(true);
 
     try {
@@ -186,13 +189,15 @@ export default function SignInScreen() {
       if (err instanceof Error) {
         const errorMessage = (err as any).errors?.[0]?.message || err.message;
         if (errorMessage.toLowerCase().includes('invalid password')) {
-          Toast.error('The password you entered is incorrect', 'top');
+          Toast.error('The password you entered is incorrect');
         } else if (errorMessage.toLowerCase().includes('too many attempts')) {
-          Toast.error('Too many failed attempts. Please try again later', 'top');
+          Toast.error('Too many failed attempts. Please try again later');
+
         } else {
-          Toast.error('Unable to sign in. Please check your credentials', 'top');
+          Toast.error('Unable to sign in. Please check your credentials');
         }
       }
+
     } finally {
       setIsLoading(false);
     }
@@ -203,9 +208,10 @@ export default function SignInScreen() {
       return;
     }
     if (!code || code.length !== 6) {
-      Toast.error('Please enter a valid verification code', 'top');
+      Toast.error('Please enter a valid verification code');
       return;
     }
+
     setIsLoading(true);
 
     try {
@@ -223,11 +229,11 @@ export default function SignInScreen() {
         const errorMessage = (err as any).errors?.[0]?.message || err.message;
         // Customize error messages for better user experience
         if (errorMessage.toLowerCase().includes('invalid code')) {
-          Toast.error('Invalid verification code. Please try again.', 'top');
+          Toast.error('Invalid verification code. Please try again.');
         } else if (errorMessage.toLowerCase().includes('expired')) {
-          Toast.error('Code has expired. Please request a new one.', 'top');
+          Toast.error('Code has expired. Please request a new one.');
         } else {
-          Toast.error('Failed to verify code. Please try again.', 'top');
+          Toast.error('Failed to verify code. Please try again.');
         }
       }
     } finally {
@@ -333,44 +339,49 @@ export default function SignInScreen() {
       animationOut="slideOutDown"
       style={{ margin: 0, justifyContent: 'flex-end' }}
       avoidKeyboard>
-      <View className="rounded-t-3xl bg-[#343541] p-8">
-        <View className="mb-1 items-end">
-          <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
-            <FontAwesome name="times" size={24} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
-        <Text className="mb-4 text-2xl font-bold text-white">Enter Password</Text>
-        <View className="mb-6">
-          <Text className="mb-2.5 font-medium text-gray-300">Password</Text>
-          <View className="relative">
-            <TextInput
-              ref={passwordInputRef}
-              className="rounded-xl border-2 border-gray-600 bg-transparent p-4 pl-12 pr-12 text-white text-base"
-              placeholder="Enter your password"
-              placeholderTextColor="#9ca3af"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              onSubmitEditing={onPasswordSubmit}
-              returnKeyType="done"
-              editable={!isLoading}
-            />
-            <View className="absolute left-4 top-4">
-              <FontAwesome name="lock" size={20} color="#9ca3af" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View className="rounded-t-3xl bg-[#343541] p-8">
+          <View className="mb-1 items-end">
+            <TouchableOpacity 
+              className="p-2" 
+              onPress={() => setShowPasswordModal(false)}
+            >
+              <X size={24} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+          <Text className="mb-4 text-2xl font-bold text-white">Enter Password</Text>
+          <View className="mb-6">
+            <Text className="mb-2.5 font-medium text-gray-300">Password</Text>
+            <View className="relative">
+              <TextInput
+                ref={passwordInputRef}
+                className="rounded-xl border-2 border-gray-600 bg-transparent p-4 pl-12 pr-12 text-white text-base"
+                placeholder="Enter your password"
+                placeholderTextColor="#9ca3af"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                onSubmitEditing={onPasswordSubmit}
+                returnKeyType="done"
+                editable={!isLoading}
+              />
+              <View className="absolute left-4 top-4">
+                <Lock size={20} color="#9ca3af" />
+              </View>
             </View>
           </View>
+          <TouchableOpacity
+            className="rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
+            onPress={onPasswordSubmit}
+            disabled={isLoading}>
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-center text-lg font-semibold text-white">Sign In</Text>
+            )}
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          className="rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
-          onPress={onPasswordSubmit}
-          disabled={isLoading}>
-          {isLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-center text-lg font-semibold text-white">Sign In</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 
@@ -410,7 +421,7 @@ export default function SignInScreen() {
         <View className="rounded-t-3xl bg-[#343541] p-8">
           <View className="mb-1 items-end">
             <TouchableOpacity onPress={() => setShowOTPModal(false)}>
-              <FontAwesome name="times" size={24} color="#9ca3af" />
+              <X size={24} color="#9ca3af" />
             </TouchableOpacity>
           </View>
           <Text className="mb-2 text-2xl font-bold text-white">Enter Verification Code</Text>
@@ -511,7 +522,7 @@ export default function SignInScreen() {
       <View className="rounded-t-3xl bg-[#343541] p-8">
         <View className="mb-1 items-end">
           <TouchableOpacity onPress={() => setShowLoginMethodModal(false)}>
-            <FontAwesome name="times" size={24} color="#9ca3af" />
+            <X size={24} color="#9ca3af" />
           </TouchableOpacity>
         </View>
         <Text className="mb-4 text-2xl font-bold text-white">Choose Login Method</Text>
@@ -550,18 +561,21 @@ export default function SignInScreen() {
   // Add keyboard handling improvements
   const scrollViewRef = useRef<ScrollView>(null);
   React.useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        // Scroll to input when keyboard shows
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      if (Platform.OS === 'android') {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
       }
-    );
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      if (Platform.OS === 'android') {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
+    });
 
     return () => {
       keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
     };
   }, []);
 
@@ -589,12 +603,13 @@ export default function SignInScreen() {
         strategy: 'email_code',
       });
       startResendTimer();
-      Toast.success('New OTP sent to your email', 'top');
+      Toast.success('New OTP sent to your email');
     } catch (err: unknown) {
       if (err instanceof Error) {
-        Toast.error((err as any).errors?.[0]?.message || err.message, 'top');
+        Toast.error((err as any).errors?.[0]?.message || err.message);
+
       } else {
-        Toast.error('Failed to resend OTP', 'top');
+        Toast.error('Failed to resend OTP');
       }
     } finally {
       setIsLoading(false);
@@ -623,19 +638,19 @@ export default function SignInScreen() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="flex-1 bg-[#343541]">
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'android' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             className="flex-1">
             <ScrollView
+              ref={scrollViewRef}
               contentContainerStyle={{ flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              ref={scrollViewRef}>
+              showsVerticalScrollIndicator={false}>
               <View className="pt-5 px-4 mb-2">
                 <TouchableOpacity 
                   onPress={handleBack}
                   className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12"
                 >
-                  <FontAwesome name="arrow-left" size={18} color="#9ca3af" />
+                  <ArrowLeft size={18} color="#9ca3af" />
                 </TouchableOpacity>
               </View>
 
@@ -688,8 +703,8 @@ export default function SignInScreen() {
                         keyboardType="email-address"
                         autoCorrect={false}
                       />
-                      <View className="absolute left-4 top-4">
-                        <FontAwesome name="envelope" size={20} color="#9ca3af" />
+                      <View className="absolute left-4 top-1/2 -translate-y-1/2">
+                        <Mail size={20} color="#9ca3af" />
                       </View>
                     </View>
                     {!isValidEmail && emailAddress.length > 0 && (

@@ -2,7 +2,7 @@ import { useOAuth } from "@clerk/clerk-expo";
 import { useCallback, useRef } from "react";
 import { useWarmUpBrowser } from "~/utils/warmUpBrowser";
 import * as WebBrowser from "expo-web-browser";
-import { Toast } from "toastify-react-native";
+import { Toast } from "@/app/Toast";
 import { useRouter } from "expo-router";
 import { Platform } from "react-native";
 

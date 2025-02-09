@@ -4,13 +4,13 @@ import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
-import { 
-  Sparkles, 
-  Loader, 
-  Pencil, 
-  Settings, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Sparkles,
+  Loader,
+  Pencil,
+  Settings,
+  ChevronDown,
+  ChevronUp,
   Lightbulb,
   X,
   RefreshCw,
@@ -36,12 +36,16 @@ import {
   RefreshControl
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import { Toast } from 'toastify-react-native';
+import { Toast } from '../Toast';
 
 
-import { useScriptStore } from '~/store/scriptStore';
-import { ensurePermissions } from '~/utils/permissions';
-import { usePermissions } from '~/hooks/usePermissions';
+
+
+
+import { useScriptStore } from '@/store/scriptStore';
+import { ensurePermissions } from '@/utils/permissions';
+import { usePermissions } from '@/hooks/usePermissions';
+
 
 // Environment configuration (should use actual environment variables in production)
 const CONFIG = {
@@ -112,9 +116,9 @@ const MarkdownContent = ({ content }: { content: string }) => {
     <View style={{ flex: 1, backgroundColor: '#343541' }}>
       <Markdown
         style={{
-          body: { 
-            color: '#ffffff', 
-            lineHeight: 24, 
+          body: {
+            color: '#ffffff',
+            lineHeight: 24,
             flex: 1,
             backgroundColor: '#343541',
           },
@@ -331,15 +335,16 @@ const MainPage = () => {
       setController(null);
       setLoading(false);
       setError('Generation stopped');
-      Toast.info('Generation stopped by user', 'top');
+      Toast.info('Generation stopped by user');
     }
   };
 
   const generateScript = async (isRegenerate: boolean = false) => {
     if (!topic.trim()) {
-      Toast.error('Please enter a topic before generating', 'top');
+      Toast.error('Please enter a topic before generating');
       return;
     }
+
 
     // If regenerating, clear previous script
     if (isRegenerate) {
@@ -413,7 +418,8 @@ const MainPage = () => {
       const result = await model.generateContent(prompt);
       const generatedText = await result.response.text();
       setScript(generatedText);
-      Toast.success('Script generated successfully!', 'top');
+      Toast.success('Script generated successfully!');
+
     } catch (error: any) {
       if (error.name === 'AbortError') {
         // Remove error state updates here since they're handled in stopGeneration()
@@ -422,7 +428,8 @@ const MainPage = () => {
         const errorMessage =
           error.message || 'Failed to generate script. Please check your connection and try again.';
         setError(errorMessage);
-        Toast.error(errorMessage, 'top');
+        Toast.error(errorMessage);
+
       }
     } finally {
       setLoading(false);
@@ -433,7 +440,7 @@ const MainPage = () => {
   const handleFileShare = async () => {
     try {
       const hasStoragePermission = await checkPermission('STORAGE');
-      
+
       if (!hasStoragePermission) {
         return;
       }
@@ -456,10 +463,11 @@ const MainPage = () => {
   const handleCopyToClipboard = async () => {
     try {
       await Clipboard.setStringAsync(script);
-      Toast.success('Script copied to clipboard', 'top');
+      Toast.success('Script copied to clipboard');
     } catch (error) {
-      Toast.error('Failed to copy script', 'top');
+      Toast.error('Failed to copy script');
     }
+
   };
 
   const [isNetworkError, setIsNetworkError] = useState(false);
@@ -481,7 +489,7 @@ const MainPage = () => {
 
   // Add refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Reset refresh state without any generation
   const onRefresh = React.useCallback(() => {
     setIsRefreshing(true);
@@ -637,7 +645,7 @@ const MainPage = () => {
                           className="mb-2 items-center justify-center rounded-xl border-2 border-red-500 p-4"
                           onPress={() => {
                             setScript('');
-                            Toast.success('Script cleared', 'top');
+                            Toast.success('Script cleared');
                           }}
                           disabled={loading}>
                           <View className="flex-row items-center gap-2">

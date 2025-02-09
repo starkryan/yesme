@@ -66,6 +66,19 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "NETWORK_STATE",
+        "READ_PHONE_STATE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS",
+        "SYSTEM_ALERT_WINDOW",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "NETWORK_STATE",
         "READ_PHONE_STATE"
       ],
       "package": "com.lemi.app",
@@ -83,6 +96,9 @@
       "eas": {
         "projectId": "6cc52a2a-a624-4309-b857-f7200b57fb68"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
