@@ -230,13 +230,8 @@ export default function SignInScreen() {
     try {
       setIsLoading(true);
       const result = await handleOAuth();
-      
-      if (result?.createdSessionId && result?.setActive) {
-        await result.setActive({ session: result.createdSessionId });
-        // Ensure the session is active before navigation
-        setTimeout(() => {
-          router.replace('/(app)');
-        }, 100);
+      if (!result) {
+        Toast.error('Google sign-in failed');
       }
     } catch (error) {
       console.error('Google sign-in error:', error);

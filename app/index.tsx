@@ -15,15 +15,59 @@ import {
 import Modal from "react-native-modal";
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
+export default function Index() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && isLoaded) {
+      if (isSignedIn) {
+        router.replace('/(app)');
+      }
+      // Don't navigate if not signed in - let GetStartedScreen show
+    }
+  }, [isLoaded, isSignedIn, mounted]);
+
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#343541]">
+        <ActivityIndicator size="large" color="#10a37f" />
+      </View>
+    );
+  }
+
+  // Show GetStartedScreen if not signed in
+  if (!isSignedIn) {
+    return <GetStartedScreen />;
+  }
+
+  // Loading state while navigation happens
+  return (
+    <View className="flex-1 items-center justify-center bg-[#343541]">
+      <ActivityIndicator size="large" color="#10a37f" />
+    </View>
+  );
+}
+
 const GetStartedScreen = () => {
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const [hasAnimated, setHasAnimated] = useState(false);
   const [appIsReady, setAppIsReady] = useState(false);
   const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Keep only the creative image animation
   const creativeImageAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function prepare() {
@@ -39,13 +83,13 @@ const GetStartedScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (appIsReady && isSignedIn) {
+    if (appIsReady && mounted && isSignedIn) {
       router.replace("/(app)");
     } else if (appIsReady && !hasAnimated) {
       startAnimation();
       setHasAnimated(true);
     }
-  }, [appIsReady, isSignedIn, hasAnimated]);
+  }, [appIsReady, isSignedIn, hasAnimated, mounted]);
 
   const startAnimation = () => {
     // Simplified animation focusing only on creative image
@@ -265,5 +309,3 @@ const GetStartedScreen = () => {
     </SafeAreaView>
   );
 };
-
-export default GetStartedScreen;

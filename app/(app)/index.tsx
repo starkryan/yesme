@@ -69,9 +69,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ label, isSelected, onPress 
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.7}
-    className={`rounded-xl px-4 py-2.5 ${
-      isSelected ? `bg-[${CONFIG.COLORS.primary}]` : 'border-2 border-gray-600 bg-transparent'
-    }`}>
+    className={`rounded-xl px-4 py-2.5 ${isSelected ? 'bg-[#10a37f]' : 'border-2 border-gray-600 bg-transparent'}`}>
     <Text className={`text-base ${isSelected ? 'font-bold text-white' : 'text-gray-300'}`}>
       {label}
     </Text>
@@ -109,12 +107,17 @@ const OptionSection = ({
 // Add new MarkdownContent component
 const MarkdownContent = ({ content }: { content: string }) => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#343541' }}>
       <Markdown
         style={{
-          body: { color: CONFIG.COLORS.text.primary, lineHeight: 24, flex: 1 },
+          body: { 
+            color: '#ffffff', 
+            lineHeight: 24, 
+            flex: 1,
+            backgroundColor: '#343541',
+          },
           heading1: {
-            color: CONFIG.COLORS.primary,
+            color: '#ffffff',
             fontSize: 24,
             fontWeight: 'bold',
             marginVertical: 16,
@@ -123,7 +126,7 @@ const MarkdownContent = ({ content }: { content: string }) => {
             paddingBottom: 8,
           },
           heading2: {
-            color: CONFIG.COLORS.text.primary,
+            color: '#ffffff',
             fontSize: 20,
             fontWeight: '600',
             marginVertical: 12,
@@ -134,33 +137,35 @@ const MarkdownContent = ({ content }: { content: string }) => {
             borderLeftColor: CONFIG.COLORS.primary,
           },
           blockquote: {
-            marginVertical: 12,
             backgroundColor: '#1F2937',
             padding: 16,
             borderRadius: 8,
             borderLeftWidth: 3,
             borderLeftColor: CONFIG.COLORS.primary,
+            marginVertical: 8,
           },
           blockquote_text: {
-            color: CONFIG.COLORS.text.primary,
+            color: '#ffffff',
             fontStyle: 'italic',
             fontSize: 16,
           },
           paragraph: {
-            color: CONFIG.COLORS.text.primary,
+            color: '#ffffff',
             marginVertical: 8,
             lineHeight: 24,
             fontSize: 16,
           },
           text: {
-            color: CONFIG.COLORS.text.primary,
+            color: '#ffffff',
           },
           list_item: {
             marginVertical: 8,
             paddingLeft: 12,
+            color: '#ffffff',
           },
           bullet_list_icon: {
-            marginLeft: 8,
+            marginRight: 8,
+            color: '#ffffff',
           },
           bullet_list_content: {
             flex: 1,
@@ -169,27 +174,91 @@ const MarkdownContent = ({ content }: { content: string }) => {
             backgroundColor: '#1F2937',
             padding: 12,
             borderRadius: 8,
+            color: '#ffffff',
+            marginLeft: 8,
           },
           em: {
-            color: CONFIG.COLORS.primary,
+            color: '#10a37f',
             fontStyle: 'normal',
             fontWeight: 'bold',
           },
           strong: {
-            color: CONFIG.COLORS.primary,
-            backgroundColor: CONFIG.COLORS.primary + '20',
+            color: '#ffffff',
+            backgroundColor: '#10a37f20',
             paddingHorizontal: 6,
             paddingVertical: 2,
             borderRadius: 4,
           },
           bullet_list: {
             marginVertical: 12,
+            color: '#ffffff',
           },
           link: {
-            color: CONFIG.COLORS.primary,
+            color: '#10a37f',
             textDecorationLine: 'underline',
             fontWeight: 'bold',
           },
+          code_block: {
+            backgroundColor: '#1F2937',
+            padding: 12,
+            borderRadius: 8,
+            color: '#ffffff',
+            marginVertical: 8,
+          },
+          code_inline: {
+            backgroundColor: '#1F2937',
+            padding: 4,
+            borderRadius: 4,
+            color: '#ffffff',
+          },
+          ordered_list: {
+            marginVertical: 12,
+            color: '#ffffff',
+          },
+          ordered_list_icon: {
+            color: '#ffffff',
+            marginRight: 8,
+          },
+          ordered_list_content: {
+            color: '#ffffff',
+            flex: 1,
+          },
+          list_item_text: {
+            color: '#ffffff',
+          },
+          text_list_content: {
+            color: '#ffffff',
+          },
+          list: {
+            color: '#ffffff',
+          },
+          listItem: {
+            color: '#ffffff',
+          },
+          listItemContent: {
+            color: '#ffffff',
+          },
+          listItemNumber: {
+            color: '#ffffff',
+          },
+          listItemBullet: {
+            color: '#ffffff',
+          },
+          fence: {
+            backgroundColor: '#1F2937',
+            padding: 12,
+            borderRadius: 8,
+            color: '#ffffff',
+          },
+          pre: {
+            backgroundColor: '#1F2937',
+            padding: 12,
+            borderRadius: 8,
+            color: '#ffffff',
+          },
+          text_container: {
+            backgroundColor: 'transparent',
+          }
         }}
       >
         {content}
@@ -215,7 +284,6 @@ const MainPage = () => {
   } = useScriptStore();
 
   const { isLoaded, isSignedIn } = useAuth();
-  const router = useRouter();
 
   // Add state for controlling generation
   const [controller, setController] = React.useState<AbortController | null>(null);
@@ -343,9 +411,7 @@ const MainPage = () => {
       Toast.success('Script generated successfully!', 'top');
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        // Remove these lines since we now handle them in stopGeneration()
-        // setError('Generation stopped');
-        // Toast.info('Generation stopped by user', 'top');
+        // Remove error state updates here since they're handled in stopGeneration()
       } else {
         console.error('Generation error:', error);
         const errorMessage =
@@ -404,13 +470,16 @@ const MainPage = () => {
   // Add refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Add refresh handler
-  const onRefresh = () => {
+  // Reset refresh state without any generation
+  const onRefresh = React.useCallback(() => {
     setIsRefreshing(true);
-    generateScript(true).finally(() => setIsRefreshing(false));
-  };
+    // Clear any existing errors
+    setError('');
+    // Just show refresh animation without data changes
+    setTimeout(() => setIsRefreshing(false), 1000);
+  }, []);
 
-  // Add loading state check
+  // Remove the router.replace call and modify the auth check
   if (!isLoaded) {
     return (
       <View className="flex-1 items-center justify-center bg-[#343541]">
@@ -419,24 +488,24 @@ const MainPage = () => {
     );
   }
 
-  // Add auth check
+  // Simply return null if not signed in - navigation is handled in root layout
   if (!isSignedIn) {
-    router.replace('/');
     return null;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-transparent">
+    <SafeAreaView className="flex-1 bg-[#343541]">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        className="flex-1 bg-[#343541]"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          className="flex-1"
+          className="flex-1 bg-[#343541]"
           contentContainerStyle={{
             flexGrow: 1,
             paddingBottom: 40,
+            backgroundColor: '#343541',
           }}
           refreshControl={
             <RefreshControl
@@ -483,7 +552,11 @@ const MainPage = () => {
                   Customize Your Script
                 </Text>
               </View>
-              <ChevronDown name={showOptions ? 'up' : 'down'} size={20} color={CONFIG.COLORS.primary} />
+              {showOptions ? (
+                <ChevronUp size={20} color={CONFIG.COLORS.primary} />
+              ) : (
+                <ChevronDown size={20} color={CONFIG.COLORS.primary} />
+              )}
             </TouchableOpacity>
 
             {/* Script Options with conditional rendering */}

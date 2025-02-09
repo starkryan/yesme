@@ -1,13 +1,9 @@
 import { useAuth, useClerk } from '@clerk/clerk-expo';
 import { Redirect, Stack, useRouter } from 'expo-router';
-import { Home, User, Menu, LogOut, X, PenSquare } from 'lucide-react-native';
+import { Home, User, LogOut, X, PenSquare, AlignLeft } from 'lucide-react-native';
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, ActivityIndicator, SafeAreaView } from 'react-native';
 import Modal from 'react-native-modal';
-
-
-import { AlignLeft } from 'lucide-react-native';
-
 const LayoutGroup = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const { signOut } = useClerk();

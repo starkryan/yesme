@@ -1,4 +1,4 @@
-import { useSignIn } from '@clerk/clerk-expo';
+import { useSignIn, useClerk } from '@clerk/clerk-expo';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -18,16 +18,18 @@ import {
 import { Toast } from 'toastify-react-native';
 import { OtpInput } from "react-native-otp-entry";
 import Modal from 'react-native-modal';
+import * as SecureStore from 'expo-secure-store';
 
-const ResetPassword = () => {
+const ForgotPassword = () => {
   const { signIn, isLoaded } = useSignIn();
+  const { signOut } = useClerk();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [code, setCode] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
-  const [showResetModal, setShowResetModal] = React.useState(false);
+  const [showOTPModal, setShowOTPModal] = React.useState(false);
   const [passwordVisible, setPasswordVisible] = React.useState(false);
   const [isValidEmail, setIsValidEmail] = React.useState(true);
   const [isValidPassword, setIsValidPassword] = React.useState(true);
@@ -40,8 +42,8 @@ const ResetPassword = () => {
       uppercase: false,
       lowercase: false,
       number: false,
-      special: false
-    }
+      special: false,
+    },
   });
   const [resetAttempts, setResetAttempts] = React.useState(0);
   const [nextResetTime, setNextResetTime] = React.useState<Date | null>(null);
@@ -49,7 +51,7 @@ const ResetPassword = () => {
   React.useEffect(() => {
     if (resendTimer > 0) {
       const timer = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
+        setResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
       }, 1000);
       return () => clearInterval(timer);
     } else {
@@ -80,22 +82,22 @@ const ResetPassword = () => {
       uppercase: /[A-Z]/.test(pass),
       lowercase: /[a-z]/.test(pass),
       number: /[0-9]/.test(pass),
-      special: /[^A-Za-z0-9]/.test(pass)
+      special: /[^A-Za-z0-9]/.test(pass),
     };
 
     const score = Object.values(requirements).filter(Boolean).length;
-    
+
     setPasswordStrength({
       score,
-      requirements
+      requirements,
     });
 
     return score === 5;
   };
 
-  const onRequestReset = React.useCallback(async () => {
+  const onRequestOTP = async () => {
     if (!isLoaded) return;
-    
+
     if (resetAttempts >= 2) {
       if (!nextResetTime) {
         const nextHour = new Date();
@@ -116,27 +118,29 @@ const ResetPassword = () => {
 
     try {
       await signIn.create({
-        identifier: emailAddress,
         strategy: 'reset_password_email_code',
+        identifier: emailAddress,
       });
-      setShowResetModal(true);
+
+      setShowOTPModal(true);
       startResendTimer();
-      Toast.success('Reset code sent to your email', 'top');
+      Toast.success('OTP sent to your email', 'top');
+      setResetAttempts((prev) => prev + 1);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        Toast.error((err as any).errors?.[0]?.message || err.message, 'top');
-
+        const clerkError = err as { errors?: Array<{ message: string }> };
+        Toast.error(clerkError.errors?.[0]?.message || err.message, 'top');
       } else {
-        Toast.error('Failed to send reset code', 'top');
+        Toast.error('Failed to send OTP', 'top');
       }
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, emailAddress, resetAttempts, nextResetTime]);
+  };
 
-  const handleResendCode = async () => {
+  const handleResendOTP = async () => {
     if (!canResend || !isLoaded) return;
-    
+
     if (resetAttempts >= 2) {
       if (!nextResetTime) {
         const nextHour = new Date();
@@ -154,29 +158,28 @@ const ResetPassword = () => {
         strategy: 'reset_password_email_code',
       });
       startResendTimer();
-      Toast.success('New reset code sent to your email', 'top');
+      Toast.success('New OTP sent to your email', 'top');
     } catch (err: unknown) {
       if (err instanceof Error) {
         Toast.error((err as any).errors?.[0]?.message || err.message, 'top');
-
       } else {
-        Toast.error('Failed to resend code', 'top');
+        Toast.error('Failed to resend OTP', 'top');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onResetPassword = React.useCallback(async () => {
+  const onResetPassword = async () => {
     if (!isLoaded) return;
-    
+
     if (!validatePassword(password)) {
       setIsValidPassword(false);
-      Toast.error('Password must be at least 8 characters long', 'top');
+      Toast.error('Password must meet all requirements', 'top');
       return;
     }
     if (!code) {
-      Toast.error('Please enter the verification code', 'top');
+      Toast.error('Please enter the OTP', 'top');
       return;
     }
     setIsValidPassword(true);
@@ -190,18 +193,18 @@ const ResetPassword = () => {
       });
 
       if (result.status === 'complete') {
-        setShowResetModal(false);
-        
-        try {
-          // Properly cleanup the session
-          await signIn.deactivate();
-          Toast.success('Password successfully updated! You can now sign in with your new password', 'top');
+        setShowOTPModal(false);
+
+        await signOut();
+        await SecureStore.deleteItemAsync('clerk-db-jwt');
+        await SecureStore.deleteItemAsync('clerk-js-session-token');
+        await SecureStore.deleteItemAsync('__clerk_client_jwt');
+
+        Toast.success('Password successfully updated! Please sign in with your new password', 'top');
+
+        setTimeout(() => {
           router.replace('/(auth)/sign-in');
-        } catch (error) {
-          console.log("Error during session cleanup:", error);
-          // Even if cleanup fails, still redirect to sign-in
-          router.replace('/(auth)/sign-in');
-        }
+        }, 100);
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -213,7 +216,7 @@ const ResetPassword = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoaded, code, password]);
+  };
 
   const renderPasswordStrength = () => {
     const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
@@ -257,26 +260,26 @@ const ResetPassword = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 bg-[#343541]">
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           className="flex-1">
           <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             <View className="pt-5 px-4 mb-2">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => router.back()}
-                className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12"
-              >
+                className="flex-row items-center p-2.5 rounded-full bg-gray-600/30 w-12">
                 <FontAwesome name="arrow-left" size={18} color="#9ca3af" />
               </TouchableOpacity>
             </View>
 
             <View className="flex-1 justify-center py-8">
               <View className="mb-10 px-8">
-                <Text className="mb-3 text-center text-3xl font-bold text-white">Reset Password</Text>
+                <Text className="mb-3 text-center text-3xl font-bold text-white">Forgot Password</Text>
                 <Text className="text-center text-base text-gray-300">
-                  Enter your email to receive a reset link
+                  Enter your email to receive an OTP
                 </Text>
               </View>
 
@@ -284,10 +287,10 @@ const ResetPassword = () => {
                 <View>
                   <Text className="mb-2 font-medium text-gray-300">Email address</Text>
                   <View className="relative">
-                    <FontAwesome 
-                      name="envelope" 
-                      size={20} 
-                      color="#9ca3af" 
+                    <FontAwesome
+                      name="envelope"
+                      size={20}
+                      color="#9ca3af"
                       style={{ position: 'absolute', left: 16, top: 16 }}
                     />
                     <TextInput
@@ -317,13 +320,13 @@ const ResetPassword = () => {
               <View className="mt-8 px-8">
                 <TouchableOpacity
                   className="rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
-                  onPress={onRequestReset}
+                  onPress={onRequestOTP}
                   disabled={isLoading}>
                   {isLoading ? (
                     <ActivityIndicator color="white" />
                   ) : (
                     <Text className="text-center text-lg font-semibold text-white">
-                      Send Reset Link
+                      Send OTP
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -340,23 +343,25 @@ const ResetPassword = () => {
         </KeyboardAvoidingView>
 
         <Modal
-          isVisible={showResetModal}
+          isVisible={showOTPModal}
           statusBarTranslucent
-          onBackdropPress={() => setShowResetModal(false)}
-          onBackButtonPress={() => setShowResetModal(false)}
+          onBackdropPress={() => setShowOTPModal(false)}
+          onBackButtonPress={() => setShowOTPModal(false)}
           useNativeDriver
           style={{ margin: 0 }}
-          avoidKeyboard>
+          avoidKeyboard
+          animationIn="slideInUp"
+          animationOut="slideOutDown">
           <View className="flex-1 justify-end">
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View className="rounded-t-3xl bg-[#343541] p-8">
                 <View className="mb-4 items-end">
-                  <TouchableOpacity onPress={() => setShowResetModal(false)}>
+                  <TouchableOpacity onPress={() => setShowOTPModal(false)}>
                     <FontAwesome name="times" size={24} color="#9ca3af" />
                   </TouchableOpacity>
                 </View>
                 <Text className="mb-2 text-2xl font-bold text-white">Reset Password</Text>
-                
+
                 <View className="mb-6">
                   <OtpInput
                     numberOfDigits={6}
@@ -378,10 +383,10 @@ const ResetPassword = () => {
                 <View className="mb-6">
                   <Text className="mb-2.5 font-medium text-gray-300">New Password</Text>
                   <View className="relative">
-                    <FontAwesome 
-                      name="lock" 
-                      size={20} 
-                      color="#9ca3af" 
+                    <FontAwesome
+                      name="lock"
+                      size={20}
+                      color="#9ca3af"
                       style={{ position: 'absolute', left: 16, top: 16 }}
                     />
                     <TextInput
@@ -399,14 +404,13 @@ const ResetPassword = () => {
                       }}
                       autoComplete="new-password"
                     />
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={{ position: 'absolute', right: 16, top: 16 }}
-                      onPress={() => setPasswordVisible(!passwordVisible)}
-                    >
-                      <FontAwesome 
-                        name={passwordVisible ? "eye-slash" : "eye"} 
-                        size={20} 
-                        color="#9ca3af" 
+                      onPress={() => setPasswordVisible(!passwordVisible)}>
+                      <FontAwesome
+                        name={passwordVisible ? "eye-slash" : "eye"}
+                        size={20}
+                        color="#9ca3af"
                       />
                     </TouchableOpacity>
                   </View>
@@ -429,12 +433,12 @@ const ResetPassword = () => {
                 <View className="mt-6 flex-row justify-center items-center">
                   {resendTimer > 0 ? (
                     <Text className="text-gray-400 mr-2">
-                      Resend code in {resendTimer}s
+                      Resend OTP in {resendTimer}s
                     </Text>
                   ) : (
-                    <TouchableOpacity onPress={handleResendCode}>
+                    <TouchableOpacity onPress={handleResendOTP}>
                       <Text className="text-[#10a37f]">
-                        Didn't receive code? Resend
+                        Didn't receive OTP? Resend
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -448,6 +452,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
-
-
+export default ForgotPassword;
