@@ -239,56 +239,33 @@ const SignUpScreen: React.FC = () => {
 
   // Enhanced verification code handling
   const onVerifyPress = async () => {
-    if (!isLoaded || !code) {
-      Toast.error('Please enter the verification code', 'top');
-      otpRef.current?.focus();
-      return;
-    }
-
-    if (code.length !== 6) {
-      Toast.error('Please enter a complete verification code', 'top');
-      return;
-    }
+    if (!isLoaded) return;
 
     setIsLoading(true);
     setVerificationError('');
 
     try {
-      const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
-      });
+      if (!code || code.length !== 6) {
+        throw new Error('Please enter a complete verification code');
+      }
 
+      const signUpAttempt = await signUp.attemptEmailAddressVerification({ code });
+      
       if (signUpAttempt.status === 'complete') {
-        Toast.success('Verification successful!', 'top');
         await setActive({ session: signUpAttempt.createdSessionId });
         router.replace('/(app)');
       }
     } catch (err: any) {
-      setCode(''); // Clear invalid code
-      otpRef.current?.clear(); // Clear OTP input
-      otpRef.current?.focus(); // Re-focus OTP input
+      const errorMessage = err.errors?.[0]?.message || err.message;
+      setVerificationError(errorMessage);
       
-      const newAttempts = otpAttempts + 1;
-      setOtpAttempts(newAttempts);
+      // Use Clerk's error messages directly
+      Toast.error(errorMessage, 'top');
       
-      const remainingAttempts = MAX_OTP_ATTEMPTS - newAttempts;
-      
-      if (remainingAttempts <= 0) {
-        setVerificationError('Maximum attempts reached. Please request a new code.');
-        Toast.error('Maximum attempts reached. Please request a new code.', 'top');
-      } else {
-        setVerificationError(
-          `Invalid verification code. ${remainingAttempts} ${
-            remainingAttempts === 1 ? 'attempt' : 'attempts'
-          } remaining.`
-        );
-        Toast.error(
-          `Verification failed. ${remainingAttempts} ${
-            remainingAttempts === 1 ? 'attempt' : 'attempts'
-          } remaining.`,
-          'top'
-        );
-      }
+      // Clear invalid code
+      setCode('');
+      otpRef.current?.clear();
+      otpRef.current?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -304,9 +281,13 @@ const SignUpScreen: React.FC = () => {
   // Add auto-focus handling
   React.useEffect(() => {
     if (pendingVerification) {
-      codeInputRef.current?.focus();
-    } else {
-      emailInputRef.current?.focus();
+      // Add slight delay for iOS to ensure proper focus
+      setTimeout(() => {
+        otpRef.current?.focus();
+        if (Platform.OS === 'ios') {
+          Keyboard.scheduleLayoutAnimation();
+        }
+      }, 100);
     }
   }, [pendingVerification]);
 
@@ -415,107 +396,112 @@ const SignUpScreen: React.FC = () => {
 
   // Update verification screen with proper OTP implementation
   const renderVerificationScreen = () => (
-    <View className="px-8">
-      <View className="mb-8">
-        <Text className="mb-3 text-center text-3xl font-bold text-white">
-          Verify Email
-        </Text>
-        <Text className="text-center text-base text-gray-300">
-          We've sent a 6-digit code to{"\n"}
-          <Text className="font-semibold text-gray-200">{emailAddress}</Text>
-        </Text>
-      </View>
-
-      <View className="mb-6">
-        <OtpInput
-          ref={otpRef}
-          numberOfDigits={6}
-          onFilled={(text) => setCode(text)}
-          theme={{
-            containerStyle: {
-              width: '100%',
-              gap: 10,
-            },
-            inputsContainerStyle: {
-              marginBottom: 16,
-            },
-            pinCodeContainerStyle: {
-              borderWidth: 2,
-              borderColor: verificationError ? '#ef4444' : '#4b5563',
-              borderRadius: 12,
-              backgroundColor: 'transparent',
-              height: 56,
-              width: 48,
-            },
-            pinCodeTextStyle: {
-              color: '#ffffff',
-              fontSize: 24,
-              fontWeight: '600',
-            },
-            focusStickStyle: {
-              backgroundColor: '#10a37f',
-              width: 4,
-            },
-            focusedPinCodeContainerStyle: {
-              borderColor: '#10a37f',
-            },
-          }}
-        />
-        {verificationError ? (
-          <Text className="mt-2 text-sm text-red-500 text-center">
-            {verificationError}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+    >
+      <View className="px-8">
+        <View className="mb-8">
+          <Text className="mb-3 text-center text-3xl font-bold text-white">
+            Verify Email
           </Text>
-        ) : null}
+          <Text className="text-center text-base text-gray-300">
+            We've sent a 6-digit code to{"\n"}
+            <Text className="font-semibold text-gray-200">{emailAddress}</Text>
+          </Text>
+        </View>
 
-        {/* Add Clear Button */}
-        {code.length > 0 && (
-          <TouchableOpacity 
-            onPress={() => {
-              otpRef.current?.clear();
-              setCode('');
+        <View className="mb-6">
+          <OtpInput
+            ref={otpRef}
+            numberOfDigits={6}
+            onTextChange={(text) => setCode(text)}
+            theme={{
+              containerStyle: {
+                width: '100%',
+                gap: 10,
+              },
+              inputsContainerStyle: {
+                marginBottom: 16,
+              },
+              pinCodeContainerStyle: {
+                borderWidth: 2,
+                borderColor: verificationError ? '#ef4444' : '#4b5563',
+                borderRadius: 12,
+                backgroundColor: 'transparent',
+                height: 56,
+                width: 48,
+              },
+              pinCodeTextStyle: {
+                color: '#ffffff',
+                fontSize: 24,
+                fontWeight: '600',
+              },
+              focusStickStyle: {
+                backgroundColor: '#10a37f',
+                width: 4,
+              },
+              focusedPinCodeContainerStyle: {
+                borderColor: '#10a37f',
+              },
             }}
-            className="mb-2"
-          >
-            <Text className="text-[#10a37f] text-center text-sm">Clear Code</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          />
+          {verificationError ? (
+            <Text className="mt-2 text-sm text-red-500 text-center">
+              {verificationError}
+            </Text>
+          ) : null}
 
-      <TouchableOpacity
-        className={`rounded-xl p-4 shadow-sm ${
-          isLoading ? 'bg-gray-600' : 'bg-[#10a37f] active:bg-[#0e906f]'
-        }`}
-        onPress={onVerifyPress}
-        disabled={isLoading}>
-        <Text className="text-center text-white text-lg">
-          {isLoading ? 'Verifying...' : 'Verify Email'}
-        </Text>
-      </TouchableOpacity>
+          {/* Add Clear Button */}
+          {code.length > 0 && (
+            <TouchableOpacity 
+              onPress={() => {
+                otpRef.current?.clear();
+                setCode('');
+              }}
+              className="mb-2"
+            >
+              <Text className="text-[#10a37f] text-center text-sm">Clear Code</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-      {/* Resend code section */}
-      <View className="mt-6">
-        <Text className="text-center text-gray-300 text-sm mb-2">
-          Didn't receive the code?
-        </Text>
         <TouchableOpacity
-          onPress={resendVerificationCode}
-          disabled={isLoading || !canResendCode || resendAttempts >= MAX_RESEND_ATTEMPTS}>
-          <Text
-            className={`text-center ${canResendCode && resendAttempts < MAX_RESEND_ATTEMPTS
-                ? 'text-[#10a37f]'
-                : 'text-gray-500'
-              }`}>
-            {isLoading
-              ? 'Sending...'
-              : resendAttempts >= MAX_RESEND_ATTEMPTS
-                ? `Too many attempts. Try again in ${formatTime(resendTimer)}`
-                : canResendCode
-                  ? `Resend Code (${MAX_RESEND_ATTEMPTS - resendAttempts} attempts remaining)`
-                  : `Resend code in ${formatTime(resendTimer)}`}
+          className={`rounded-xl p-4 shadow-sm ${
+            isLoading ? 'bg-gray-600' : 'bg-[#10a37f] active:bg-[#0e906f]'
+          }`}
+          onPress={onVerifyPress}
+          disabled={isLoading || !code}>
+          <Text className="text-center text-white text-lg">
+            {isLoading ? 'Verifying...' : 'Verify Email'}
           </Text>
         </TouchableOpacity>
+
+        {/* Resend code section */}
+        <View className="mt-6">
+          <Text className="text-center text-gray-300 text-sm mb-2">
+            Didn't receive the code?
+          </Text>
+          <TouchableOpacity
+            onPress={resendVerificationCode}
+            disabled={isLoading || !canResendCode || resendAttempts >= MAX_RESEND_ATTEMPTS}>
+            <Text
+              className={`text-center ${canResendCode && resendAttempts < MAX_RESEND_ATTEMPTS
+                  ? 'text-[#10a37f]'
+                  : 'text-gray-500'
+                }`}>
+              {isLoading
+                ? 'Sending...'
+                : resendAttempts >= MAX_RESEND_ATTEMPTS
+                  ? `Too many attempts. Try again in ${formatTime(resendTimer)}`
+                  : canResendCode
+                    ? `Resend Code (${MAX_RESEND_ATTEMPTS - resendAttempts} attempts remaining)`
+                    : `Resend code in ${formatTime(resendTimer)}`}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 
   // Update timer effect to properly handle initialization and reset
@@ -783,12 +769,12 @@ const SignUpScreen: React.FC = () => {
                             />
                           </TouchableOpacity>
                         </View>
-                        {!isPasswordValid && password.length > 0 && (
+                        {/* {!isPasswordValid && password.length > 0 && (
                           <Text className="mt-2 text-sm text-red-500">
                             Password must contain at least 8 characters, including uppercase,
                             lowercase, number, and special character
                           </Text>
-                        )}
+                        )} */}
                       </View>
 
                       {renderPasswordStrength()}
