@@ -287,6 +287,9 @@ const MainPage = () => {
 
   const { isLoaded, isSignedIn } = useAuth();
 
+  // Move the hook to the component level
+  const { checkPermission } = usePermissions();
+
   // Add state for controlling generation
   const [controller, setController] = React.useState<AbortController | null>(null);
 
@@ -429,7 +432,6 @@ const MainPage = () => {
 
   const handleFileShare = async () => {
     try {
-      const { checkPermission } = usePermissions();
       const hasStoragePermission = await checkPermission('STORAGE');
       
       if (!hasStoragePermission) {

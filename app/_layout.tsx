@@ -6,14 +6,14 @@ import { getRandomValues as expoCryptoGetRandomValues } from 'expo-crypto';
 import { Slot, useRouter } from 'expo-router';
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import ToastProvider, { Toast } from 'toastify-react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ErrorBoundary } from 'react-error-boundary';
-import { WifiOff } from 'lucide-react-native';
+
 
 // At the top of the file, after imports
 const CONSTANTS = {
@@ -30,15 +30,18 @@ const TOAST_CONFIG = {
   width: 300,
   height: 'auto',
   duration: CONSTANTS.TOAST_DURATION,
-  position: 'bottom' as const,
-  animationStyle: 'upInUpOut',
+  position: 'top' as const,
+  animationIn: 'slideInDown',
+  animationOut: 'slideOutUp',
   animationInTiming: 300,
   animationOutTiming: 300,
+  showProgressBar: true,
   style: {
     backgroundColor: CONSTANTS.BACKGROUND_COLOR,
     borderRadius: 12,
+
     padding: 10,
-    marginBottom: 10,
+    marginTop: 10,
     maxWidth: '90%',
     borderWidth: 2,
     borderColor: '#4b5563',
@@ -62,7 +65,7 @@ const TOAST_CONFIG = {
 
 // Add after CONSTANTS
 const ERROR_MESSAGES = {
-  NO_INTERNET: 'No internet connection',
+  NO_INTERNET: 'No internet connection. Some features may be limited.',
   BACK_ONLINE: 'Back online',
   APP_ACCESS_ERROR: 'Unable to access the app. Please check your connection and try again.',
   APP_START_ERROR: 'Unable to start the app. Please try again.',
@@ -89,7 +92,7 @@ if (!publishableKey) {
 }
 
 // Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync().catch(console.warn);
+SplashScreen.preventAutoHideAsync();
 
 function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
   return (
@@ -110,7 +113,8 @@ function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
   );
 }
 
-function RootLayoutContent() {
+const RootLayoutContent = () => {
+  const [appIsReady, setAppIsReady] = useState(false);
   const { isLoaded, isSignedIn } = useAuth();
   const [isOffline, setIsOffline] = React.useState<boolean>(false);
   const wasOffline = useRef(false);
@@ -227,7 +231,31 @@ function RootLayoutContent() {
     };
   }, [isLoaded, isSignedIn, isReady, handleNavigation]);
 
-  if (!isReady || !isLoaded || isNavigating) {
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Pre-load fonts, make API calls, etc.
+        await Promise.all([
+          // Add your resource loading here
+          new Promise(resolve => setTimeout(resolve, 500)), // Minimum loading time
+        ]);
+      } catch (e) {
+        console.warn('Error loading resources:', e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady || !isLoaded || isNavigating) {
     return (
       <View className="flex-1 items-center justify-center bg-[#343541]">
         <ActivityIndicator size="large" color="#10a37f" />
@@ -235,35 +263,16 @@ function RootLayoutContent() {
     );
   }
 
-  if (isOffline) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#343541] px-4">
-        <WifiOff
-          size={48}
-          color="#ef4444"
-          className="mb-4"
-          strokeWidth={1.5}
-        />
-        <Text className="text-white text-lg text-center">
-          {ERROR_MESSAGES.NO_INTERNET}
-        </Text>
-        <Text className="text-gray-400 text-center mt-2">
-          {ERROR_MESSAGES.CHECK_CONNECTION}
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaProvider>
       <StatusBar style="light" backgroundColor="#343541" />
-      <SafeAreaView className="flex-1 bg-[#343541]">
+      <SafeAreaView className="flex-1 bg-[#343541]" onLayout={onLayoutRootView}>
         <Slot />
       </SafeAreaView>
       <ToastProvider {...TOAST_CONFIG} />
     </SafeAreaProvider>
   );
-}
+};
 
 export default function RootLayout() {
   return (

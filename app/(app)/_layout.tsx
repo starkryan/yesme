@@ -4,9 +4,7 @@ import { PenSquare, AlignLeft } from 'lucide-react-native';
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, ActivityIndicator, SafeAreaView } from 'react-native';
 import Modal from 'react-native-modal';
-import { Sidebar } from '../components/Sidebar';
-
-
+import Sidebar from '../components/Sidebar';
 
 
 const LayoutGroup = () => {
@@ -18,15 +16,18 @@ const LayoutGroup = () => {
   const slideAnim = useRef(new Animated.Value(-280)).current;
   const sidebarOpenRef = useRef(false);
 
-  if (!isLoaded) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#343541]">
-        <ActivityIndicator size="large" color="#10a37f" />
-      </View>
-    );
+  // Memoize authentication state
+  const authState = React.useMemo(() => ({
+    isLoaded,
+    isSignedIn
+  }), [isLoaded, isSignedIn]);
+
+  // Handle loading state with splash screen
+  if (!authState.isLoaded) {
+    return null; // Keep splash screen visible
   }
 
-  if (!isSignedIn) {
+  if (!authState.isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 

@@ -14,7 +14,7 @@ const navigationItems = [
   { label: 'Profile', icon: User, route: '/profile' },
 ];
 
-export const Sidebar = ({ slideAnim, toggleSidebar, onSignOutPress }: SidebarProps) => {
+const Sidebar = ({ slideAnim, toggleSidebar, onSignOutPress }: SidebarProps) => {
   const router = useRouter();
 
   return (
@@ -62,3 +62,5 @@ export const Sidebar = ({ slideAnim, toggleSidebar, onSignOutPress }: SidebarPro
     </Animated.View>
   );
 }; 
+
+export default Sidebar;
