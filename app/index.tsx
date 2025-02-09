@@ -19,6 +19,7 @@ export default function Index() {
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -32,6 +33,14 @@ export default function Index() {
       // Don't navigate if not signed in - let GetStartedScreen show
     }
   }, [isLoaded, isSignedIn, mounted]);
+
+  if (error) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#343541] p-4">
+        <Text className="text-white text-center">Something went wrong. Please try again.</Text>
+      </View>
+    );
+  }
 
   if (!isLoaded) {
     return (
@@ -61,6 +70,7 @@ const GetStartedScreen = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   // Keep only the creative image animation
   const creativeImageAnim = useRef(new Animated.Value(0)).current;
@@ -70,12 +80,20 @@ const GetStartedScreen = () => {
   }, []);
 
   useEffect(() => {
+    return () => {
+      creativeImageAnim.setValue(0);
+    };
+  }, []);
+
+  useEffect(() => {
     async function prepare() {
       try {
+        await SplashScreen.preventAutoHideAsync();
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (e) {
-        console.warn(e);
+        console.error('Error preparing app:', e);
       } finally {
+        await SplashScreen.hideAsync();
         setAppIsReady(true);
       }
     }
@@ -132,6 +150,9 @@ const GetStartedScreen = () => {
             source={require("../assets/creative.png")} 
             className="w-40 h-40 mt-8 object-contain"
             resizeMode="contain"
+            onError={() => setImageLoadError(true)}
+            accessible={true}
+            accessibilityLabel="Creative illustration"
           />
         </Animated.View>
 
@@ -147,6 +168,9 @@ const GetStartedScreen = () => {
             source={require("../assets/icon.png")}
             className="w-36 h-36 object-contain"
             resizeMode="contain"
+            onError={() => setImageLoadError(true)}
+            accessible={true}
+            accessibilityLabel="App icon"
           />
 
           <Text className="mt-8 text-center text-2xl font-bold text-white mb-2">
@@ -210,6 +234,10 @@ const GetStartedScreen = () => {
         animationIn="slideInUp"
         animationOut="slideOutDown"
         backdropOpacity={0.5}
+        accessible={true}
+        accessibilityLabel="Privacy Policy"
+        accessibilityRole="alert"
+        useNativeDriver={true}
       >
         <View className="bg-[#343541] rounded-2xl p-6" style={{ maxHeight: '80%' }}>
           <View className="flex-row justify-between items-center mb-4">

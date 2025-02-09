@@ -1,30 +1,53 @@
 import { Link, Stack } from 'expo-router';
 import { Text, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { AlertCircle, ArrowLeft, Home } from 'lucide-react-native';
 
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
+      <Stack.Screen options={{ title: 'Page Not Found' }} />
       <View className="flex-1 bg-[#343541]">
         <View className="flex-1 items-center justify-center p-8">
-          <FontAwesome name="exclamation-circle" size={64} color="#10a37f" />
-          <Text className="mt-6 text-center text-2xl font-bold text-white">
-            This screen doesn't exist
+          {/* Error Icon with animated pulse effect */}
+          <View className="animate-pulse">
+            <AlertCircle size={80} color="#10a37f" strokeWidth={1.5} />
+          </View>
+
+          {/* Error Messages */}
+          <Text className="mt-8 text-center text-3xl font-bold text-white">
+            Oops!
           </Text>
-          <Text className="mt-2 text-center text-base text-gray-300">
-            The page you're looking for cannot be found
+          <Text className="mt-6 text-center text-xl font-bold text-white">
+            Page Not Found
           </Text>
-          <Link
-            href="/"
-            className="mt-8 w-full rounded-xl bg-[#10a37f] p-4 active:bg-[#0e906f]">
-            <View className="flex-row items-center justify-center space-x-2">
-              <FontAwesome name="home" size={20} color="white" />
-              <Text className="ml-2 text-center text-lg font-semibold text-white">
-                Go to Home Screen
-              </Text>
-            </View>
-          </Link>
+          <Text className="mt-3 text-center text-base text-gray-400">
+            The page you're looking for doesn't exist or has been moved
+          </Text>
+
+          {/* Navigation Buttons */}
+          <View className="mt-12 w-full space-y-4">
+            <Link
+              href="/"
+              className="rounded-xl bg-[#10a37f] p-4 active:bg-[#0e906f]">
+              <View className="flex-row items-center justify-center space-x-2">
+                <Home size={24} color="white" strokeWidth={2} />
+                <Text className="ml-2 text-center text-lg font-semibold text-white">
+                  Back to Home
+                </Text>
+              </View>
+            </Link>
+
+            <Link
+              href=".."
+              className="rounded-xl border border-[#10a37f] p-4">
+              <View className="flex-row items-center justify-center space-x-2">
+                <ArrowLeft size={24} color="#10a37f" strokeWidth={2} />
+                <Text className="ml-2 text-center text-lg font-semibold text-[#10a37f]">
+                  Go Back
+                </Text>
+              </View>
+            </Link>
+          </View>
         </View>
       </View>
     </>

@@ -40,6 +40,8 @@ import { Toast } from 'toastify-react-native';
 
 
 import { useScriptStore } from '~/store/scriptStore';
+import { ensurePermissions } from '~/utils/permissions';
+import { usePermissions } from '~/hooks/usePermissions';
 
 // Environment configuration (should use actual environment variables in production)
 const CONFIG = {
@@ -427,6 +429,13 @@ const MainPage = () => {
 
   const handleFileShare = async () => {
     try {
+      const { checkPermission } = usePermissions();
+      const hasStoragePermission = await checkPermission('STORAGE');
+      
+      if (!hasStoragePermission) {
+        return;
+      }
+
       const fileName = `script-${Date.now()}.md`;
       const fileUri = FileSystem.documentDirectory + fileName;
 
@@ -437,7 +446,8 @@ const MainPage = () => {
         message: script,
       });
     } catch (error) {
-      Alert.alert('Error', 'Failed to save or share the script');
+      console.error('Share error:', error);
+      Toast.error('Failed to save or share the script');
     }
   };
 

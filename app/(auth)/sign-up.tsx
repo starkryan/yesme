@@ -16,6 +16,7 @@ import {
   Image,
   Pressable,
   GestureResponderEvent,
+  LayoutAnimation,
 } from 'react-native';
 import { Toast } from 'toastify-react-native';
 
@@ -284,8 +285,8 @@ const SignUpScreen: React.FC = () => {
       // Add slight delay for iOS to ensure proper focus
       setTimeout(() => {
         otpRef.current?.focus();
-        if (Platform.OS === 'ios') {
-          Keyboard.scheduleLayoutAnimation();
+        if (Platform.OS === 'android') {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         }
       }, 100);
     }

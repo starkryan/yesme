@@ -170,14 +170,6 @@ export default function SignInScreen() {
     setIsLoading(true);
 
     try {
-      // First deactivate any existing session
-      try {
-        await signIn.deactivate();
-      } catch (error) {
-        console.log("Error deactivating existing session:", error);
-      }
-
-      // Create new sign-in attempt
       const attempt = await signIn.create({
         identifier: emailAddress,
         strategy: 'password',
@@ -194,11 +186,11 @@ export default function SignInScreen() {
       if (err instanceof Error) {
         const errorMessage = (err as any).errors?.[0]?.message || err.message;
         if (errorMessage.toLowerCase().includes('invalid password')) {
-          Toast.error('Incorrect password. Please try again.', 'top');
+          Toast.error('The password you entered is incorrect', 'top');
         } else if (errorMessage.toLowerCase().includes('too many attempts')) {
-          Toast.error('Too many attempts. Please try again later.', 'top');
+          Toast.error('Too many failed attempts. Please try again later', 'top');
         } else {
-          Toast.error('An error occurred. Please try again.', 'top');
+          Toast.error('Unable to sign in. Please check your credentials', 'top');
         }
       }
     } finally {
@@ -312,11 +304,21 @@ export default function SignInScreen() {
       // Short delay to ensure modal is fully visible
       const timer = setTimeout(() => {
         otpRef.current?.focus();
-        if (Platform.OS === 'ios') {
-          Keyboard.scheduleLayoutAnimation();
+        if (Platform.OS === 'android') {
+          Keyboard.addListener('keyboardDidShow', () => {
+            // Android specific keyboard handling
+            if (scrollViewRef.current) {
+              scrollViewRef.current.scrollToEnd({ animated: true });
+            }
+          });
         }
       }, 250);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (Platform.OS === 'android') {
+          Keyboard.removeAllListeners('keyboardDidShow');
+        }
+      };
     }
   }, [showOTPModal]);
 
@@ -529,11 +531,13 @@ export default function SignInScreen() {
           className="rounded-xl bg-[#10a37f] p-4 shadow-sm active:bg-[#0e906f]"
           onPress={async () => {
             setShowLoginMethodModal(false);
-            await signIn.create({
-              identifier: emailAddress,
-              strategy: 'email_code',
-            });
-            setShowOTPModal(true);
+            if (signIn) {
+              await signIn.create({
+                identifier: emailAddress,
+                strategy: 'email_code',
+              });
+              setShowOTPModal(true);
+            }
           }}>
           <Text className="text-center text-lg font-semibold text-white">
             Use Email Code
@@ -619,7 +623,7 @@ export default function SignInScreen() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="flex-1 bg-[#343541]">
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'android' ? 'padding' : undefined}
             className="flex-1">
             <ScrollView
               contentContainerStyle={{ flexGrow: 1 }}
