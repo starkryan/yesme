@@ -180,7 +180,7 @@ const ToastManager: React.FC<ToastManagerProps> = ({
   }, [progressAnim]);
 
   const resume = useCallback(() => {
-    const currentProgress = progressAnim._value;
+    const currentProgress = progressAnim.getValue();
     const remainingDuration = toastDuration * currentProgress;
     
     startProgressAnimation();
@@ -206,8 +206,8 @@ const ToastManager: React.FC<ToastManagerProps> = ({
 
   return (
     <Modal
-      animationIn={finalAnimationIn}
-      animationOut={finalAnimationOut}
+      animationIn="slideInDown"
+      animationOut="slideOutUp" 
       animationInTiming={animationInTiming}
       animationOutTiming={animationOutTiming}
       onTouchEnd={resume}

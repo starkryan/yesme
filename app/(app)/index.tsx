@@ -4,13 +4,13 @@ import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
-import {
-  Sparkles,
-  Loader,
-  Pencil,
-  Settings,
-  ChevronDown,
-  ChevronUp,
+import { 
+  Sparkles, 
+  Loader, 
+  Pencil, 
+  Settings, 
+  ChevronDown, 
+  ChevronUp, 
   Lightbulb,
   X,
   RefreshCw,
@@ -18,7 +18,13 @@ import {
   Video,
   Tag,
   Copy,
-  Share2
+  Share2,
+  Plus,
+  Youtube,
+  Film,
+  Camera,
+  Mic,
+  Menu
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -33,33 +39,31 @@ import {
   KeyboardAvoidingView,
   Alert,
   SafeAreaView,
-  RefreshControl
+  RefreshControl,
+  Modal
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { Toast } from '../Toast';
 
 
 
-
-
-import { useScriptStore } from '@/store/scriptStore';
-import { ensurePermissions } from '@/utils/permissions';
-import { usePermissions } from '@/hooks/usePermissions';
-
+import { useScriptStore } from '~/store/scriptStore';
+import { ensurePermissions } from '~/utils/permissions';
+import { usePermissions } from '~/hooks/usePermissions';
 
 // Environment configuration (should use actual environment variables in production)
 const CONFIG = {
   GEMINI_API_KEY:
     Constants.expoConfig?.extra?.GOOGLE_GEMINI_API_KEY || 'AIzaSyAs4vFUhoajF79bzBdpP1fgVNgPa8whAEU',
   COLORS: {
-    primary: '#10a37f',      // Primary green color
-    primaryActive: '#0e906f', // Darker green for active states
-    background: '#343541',    // Dark background color
-    border: '#4b5563',       // Border color (gray-600)
+    primary: '#10a37f',      // ChatGPT green
+    background: '#343541',   // Main background
+    surface: '#444654',      // Message bubbles
+    inputBg: '#40414f',      // Input background
+    border: '#565869',       // Borders
     text: {
-      primary: '#ffffff',    // White text
-      secondary: '#9ca3af',  // Gray text (gray-400)
-      tertiary: '#6b7280',   // Darker gray text (gray-500)
+      primary: '#ececf1',    // Primary text
+      secondary: '#8e8ea0',  // Secondary text
     },
     error: '#ef4444',        // Red for errors
   },
@@ -113,74 +117,37 @@ const OptionSection = ({
 // Add new MarkdownContent component
 const MarkdownContent = ({ content }: { content: string }) => {
   return (
-    <View style={{ flex: 1, backgroundColor: '#343541' }}>
+    <View style={{ backgroundColor: '#444654' }}>
       <Markdown
         style={{
-          body: {
-            color: '#ffffff',
-            lineHeight: 24,
-            flex: 1,
-            backgroundColor: '#343541',
-          },
-          heading1: {
-            color: '#ffffff',
-            fontSize: 24,
-            fontWeight: 'bold',
-            marginVertical: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: CONFIG.COLORS.border,
-            paddingBottom: 8,
-          },
-          heading2: {
-            color: '#ffffff',
-            fontSize: 20,
-            fontWeight: '600',
-            marginVertical: 12,
-            backgroundColor: '#1F2937',
-            padding: 12,
-            borderRadius: 8,
-            borderLeftWidth: 4,
-            borderLeftColor: CONFIG.COLORS.primary,
-          },
-          blockquote: {
-            backgroundColor: '#1F2937',
-            padding: 16,
-            borderRadius: 8,
-            borderLeftWidth: 3,
-            borderLeftColor: CONFIG.COLORS.primary,
-            marginVertical: 8,
-          },
-          blockquote_text: {
-            color: '#ffffff',
-            fontStyle: 'italic',
-            fontSize: 16,
-          },
-          paragraph: {
-            color: '#ffffff',
-            marginVertical: 8,
-            lineHeight: 24,
-            fontSize: 16,
-          },
+          body: { color: '#ececf1' },
+          heading1: { color: '#ececf1', fontSize: 24, fontWeight: '600' },
+          heading2: { color: '#ececf1', fontSize: 20, fontWeight: '600' },
+          paragraph: { color: '#ececf1', fontSize: 16, lineHeight: 24 },
+          link: { color: '#10a37f' },
+          code_inline: { backgroundColor: '#343541', color: '#ececf1' },
+          code_block: { backgroundColor: '#343541', color: '#ececf1' },
+          blockquote: { backgroundColor: '#343541', borderLeftColor: '#10a37f' },
           text: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           list_item: {
             marginVertical: 8,
             paddingLeft: 12,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           bullet_list_icon: {
             marginRight: 8,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           bullet_list_content: {
             flex: 1,
             borderLeftWidth: 2,
-            borderLeftColor: CONFIG.COLORS.primary,
-            backgroundColor: '#1F2937',
+            borderLeftColor: '#10a37f',
+            backgroundColor: '#343541',
             padding: 12,
             borderRadius: 8,
-            color: '#ffffff',
+            color: '#ececf1',
             marginLeft: 8,
           },
           em: {
@@ -189,7 +156,7 @@ const MarkdownContent = ({ content }: { content: string }) => {
             fontWeight: 'bold',
           },
           strong: {
-            color: '#ffffff',
+            color: '#ececf1',
             backgroundColor: '#10a37f20',
             paddingHorizontal: 6,
             paddingVertical: 2,
@@ -197,76 +164,57 @@ const MarkdownContent = ({ content }: { content: string }) => {
           },
           bullet_list: {
             marginVertical: 12,
-            color: '#ffffff',
-          },
-          link: {
-            color: '#10a37f',
-            textDecorationLine: 'underline',
-            fontWeight: 'bold',
-          },
-          code_block: {
-            backgroundColor: '#1F2937',
-            padding: 12,
-            borderRadius: 8,
-            color: '#ffffff',
-            marginVertical: 8,
-          },
-          code_inline: {
-            backgroundColor: '#1F2937',
-            padding: 4,
-            borderRadius: 4,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           ordered_list: {
             marginVertical: 12,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           ordered_list_icon: {
-            color: '#ffffff',
+            color: '#ececf1',
             marginRight: 8,
           },
           ordered_list_content: {
-            color: '#ffffff',
+            color: '#ececf1',
             flex: 1,
           },
           list_item_text: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           text_list_content: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           list: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           listItem: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           listItemContent: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           listItemNumber: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           listItemBullet: {
-            color: '#ffffff',
+            color: '#ececf1',
           },
           fence: {
-            backgroundColor: '#1F2937',
+            backgroundColor: '#343541',
             padding: 12,
             borderRadius: 8,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           pre: {
-            backgroundColor: '#1F2937',
+            backgroundColor: '#343541',
             padding: 12,
             borderRadius: 8,
-            color: '#ffffff',
+            color: '#ececf1',
           },
           text_container: {
             backgroundColor: 'transparent',
           }
-        }}
-      >
+        }}>
         {content}
       </Markdown>
     </View>
@@ -301,12 +249,12 @@ const MainPage = () => {
   const [loadingMessageIndex, setLoadingMessageIndex] = React.useState(0);
 
   const loadingMessages = [
-    'AI is crafting something amazing... 🎥',
-    'Brainstorming creative ideas for your video... 💡',
-    'Structuring your content for maximum engagement... 📊',
-    'Adding engaging hooks and transitions... ✨',
-    'Polishing your script to perfection... ⭐',
-    'Almost there, finalizing your YouTube script... 🎬',
+    { text: 'AI is crafting something amazing... 🎥', color: '#10a37f' },
+    { text: 'Brainstorming creative ideas... 💡', color: '#8e8ea0' },
+    { text: 'Structuring your content... 📊', color: '#10a37f' },
+    { text: 'Adding engaging hooks... ✨', color: '#8e8ea0' },
+    { text: 'Polishing to perfection... ⭐', color: '#10a37f' },
+    { text: 'Finalizing your script... 🎬', color: '#8e8ea0' },
   ];
 
   // Add effect to rotate messages during loading
@@ -344,7 +292,6 @@ const MainPage = () => {
       Toast.error('Please enter a topic before generating');
       return;
     }
-
 
     // If regenerating, clear previous script
     if (isRegenerate) {
@@ -419,10 +366,10 @@ const MainPage = () => {
       const generatedText = await result.response.text();
       setScript(generatedText);
       Toast.success('Script generated successfully!');
-
     } catch (error: any) {
       if (error.name === 'AbortError') {
         // Remove error state updates here since they're handled in stopGeneration()
+
       } else {
         console.error('Generation error:', error);
         const errorMessage =
@@ -440,7 +387,7 @@ const MainPage = () => {
   const handleFileShare = async () => {
     try {
       const hasStoragePermission = await checkPermission('STORAGE');
-
+      
       if (!hasStoragePermission) {
         return;
       }
@@ -489,7 +436,7 @@ const MainPage = () => {
 
   // Add refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
-
+  
   // Reset refresh state without any generation
   const onRefresh = React.useCallback(() => {
     setIsRefreshing(true);
@@ -498,6 +445,40 @@ const MainPage = () => {
     // Just show refresh animation without data changes
     setTimeout(() => setIsRefreshing(false), 1000);
   }, []);
+
+  // Update topic suggestions UI
+  const topicSuggestions = [
+    { 
+      icon: <Youtube size={20} color="#10a37f" />, 
+      text: 'Tech review video',
+      bg: 'bg-[#10a37f10]',
+      border: 'border-[#10a37f]'
+    },
+    { 
+      icon: <Film size={20} color="#10a37f" />, 
+      text: 'Short film analysis',
+      bg: 'bg-[#10a37f10]',
+      border: 'border-[#10a37f]'
+    },
+    { 
+      icon: <Camera size={20} color="#10a37f" />, 
+      text: 'Photography tutorial',
+      bg: 'bg-[#10a37f10]',
+      border: 'border-[#10a37f]'
+    },
+    { 
+      icon: <Mic size={20} color="#10a37f" />, 
+      text: 'Podcast episode',
+      bg: 'bg-[#10a37f10]',
+      border: 'border-[#10a37f]'
+    },
+    { 
+      icon: <Sparkles size={20} color="#10a37f" />, 
+      text: 'Viral challenge idea',
+      bg: 'bg-[#10a37f10]',
+      border: 'border-[#10a37f]'
+    }
+  ];
 
   // Remove the router.replace call and modify the auth check
   if (!isLoaded) {
@@ -517,16 +498,14 @@ const MainPage = () => {
     <SafeAreaView className="flex-1 bg-[#343541]">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-[#343541]"
+        className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+        
+        
+
         <ScrollView
-          keyboardShouldPersistTaps="handled"
-          className="flex-1 bg-[#343541]"
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingBottom: 40,
-            backgroundColor: '#343541',
-          }}
+          className="flex-1 px-4"
+          contentContainerStyle={{ paddingBottom: 100 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -535,53 +514,95 @@ const MainPage = () => {
               colors={['#10a37f']}
             />
           }>
-          {/* Updated Header */}
-          <View className="border-b border-gray-700 bg-transparent px-6 py-4">
-            <Text className="text-2xl font-bold text-white">YouTube Script Generator</Text>
-            <Text className="mt-1 text-gray-400">Create engaging video scripts in seconds</Text>
-          </View>
 
-          <View className="gap-6 p-4">
-            {/* Topic Input with improved styling */}
-            <View className="mb-4 gap-3">
-              <View className="flex-row items-center gap-2">
-                <Pencil size={24} color={CONFIG.COLORS.primary} />
-                <Text className="text-lg font-bold text-gray-300">Video Topic</Text>
+          {/* Topic Suggestions */}
+          {!script && !loading && (
+            <View className="mt-6">
+              <View className="flex-row items-center gap-2 mb-4">
+                <Lightbulb size={20} color="#8e8ea0" />
+                <Text className="text-[#8e8ea0]">Try one of these topics:</Text>
               </View>
-              <TextInput
-                placeholder="What's your video about? Be specific..."
-                value={topic}
-                onChangeText={setTopic}
-                multiline
-                className="min-h-[120px] rounded-xl border-2 border-gray-600 bg-transparent p-4 text-base text-white"
-                placeholderTextColor={CONFIG.COLORS.text.secondary}
-              />
+              <View className="gap-2">
+                {topicSuggestions.map((suggestion, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    className={`flex-row items-center gap-3 rounded-xl p-4 border ${suggestion.bg} ${suggestion.border}`}
+                    onPress={() => setTopic(suggestion.text)}
+                    activeOpacity={0.8}
+                  >
+                    {suggestion.icon}
+                    <Text className="text-[#ececf1] text-base">{suggestion.text}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
+          )}
 
-            {/* Options Toggle with updated styling */}
-            <TouchableOpacity
-              className="mb-4 flex-row items-center justify-between rounded-xl border-2 border-gray-600 bg-transparent p-4"
-              onPress={() => setShowOptions(!showOptions)}>
-              <View className="flex-row items-center gap-3">
-                <Settings
-                  size={24}
-                  color={CONFIG.COLORS.primary}
-                  style={{ transform: [{ rotate: `${rotation}deg` }] }}
-                />
-                <Text className="ml-2 text-base font-bold text-gray-300">
-                  Customize Your Script
-                </Text>
+          {/* Generated Script - Moved options to modal */}
+          {script && (
+            <View className="mb-4 rounded-xl bg-[#444654] p-4">
+              <View className="flex-row items-center justify-between pb-3">
+                <Text className="text-[#ececf1] text-lg font-semibold">Generated Script</Text>
+                <View className="flex-row gap-2">
+                  <TouchableOpacity onPress={handleCopyToClipboard}>
+                    <Copy size={20} color="#8e8ea0" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleFileShare}>
+                    <Share2 size={20} color="#8e8ea0" />
+                  </TouchableOpacity>
+                </View>
               </View>
-              {showOptions ? (
-                <ChevronUp size={20} color={CONFIG.COLORS.primary} />
+              <MarkdownContent content={script} />
+            </View>
+          )}
+
+        </ScrollView>
+
+        {/* Enhanced Input Bottom Bar */}
+        <View className="absolute bottom-0 w-full border-t border-[#565869] bg-[#343541] px-4 py-3">
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity 
+              className="p-2"
+              onPress={() => setShowOptions(!showOptions)}>
+              <Plus size={24} color="#8e8ea0" />
+            </TouchableOpacity>
+            
+            <TextInput
+              placeholder="Enter your topic here..."
+              placeholderTextColor="#8e8ea0"
+              value={topic}
+              onChangeText={setTopic}
+              className="flex-1 rounded-xl bg-[#40414f] px-4 py-3 text-[#ececf1]"
+            />
+            
+            <TouchableOpacity
+              className="rounded-xl bg-[#10a37f] p-3"
+              onPress={() => generateScript(false)}
+              disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color="white" />
               ) : (
-                <ChevronDown size={20} color={CONFIG.COLORS.primary} />
+                <Sparkles color="white" size={24} />
               )}
             </TouchableOpacity>
+          </View>
+        </View>
 
-            {/* Script Options with conditional rendering */}
-            {showOptions && (
-              <View className="mb-4 gap-4">
+        {/* Options Modal */}
+        <Modal
+          visible={showOptions}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowOptions(false)}>
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="max-h-[70vh] rounded-t-2xl bg-[#40414f] p-4">
+              <View className="mb-4 flex-row items-center justify-between">
+                <Text className="text-lg font-bold text-[#ececf1]">Script Options</Text>
+                <TouchableOpacity onPress={() => setShowOptions(false)}>
+                  <X size={24} color="#8e8ea0" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView>
                 {Object.entries(scriptOptions).map(([key, option]) => (
                   <OptionSection
                     key={key}
@@ -591,123 +612,29 @@ const MainPage = () => {
                     onSelect={(val) => updateScriptOption(key, val)}
                   />
                 ))}
-              </View>
-            )}
-
-            {/* Generate/Stop/Regenerate Buttons Section */}
-            {!showOptions && (
-              <View className="mt-4 gap-2">
-                {loading ? (
-                  <>
-                    <View className="items-center justify-center p-4">
-                      <ActivityIndicator size="large" color={CONFIG.COLORS.primary} />
-                      <View className="mt-4 flex-row items-center gap-2">
-                        <Lightbulb size={24} color={CONFIG.COLORS.primary} />
-                        <Text className="text-center text-gray-300">
-                          {loadingMessages[loadingMessageIndex]}
-                        </Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      className="items-center justify-center rounded-xl bg-red-500 p-4"
-                      onPress={stopGeneration}>
-                      <View className="flex-row items-center gap-2">
-                        <X size={24} color="white" />
-                        <Text className="text-lg font-bold text-white">Stop Generation</Text>
-                      </View>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      className="items-center justify-center rounded-xl bg-[#10a37f] p-4 active:bg-[#0e906f]"
-                      onPress={() => generateScript(false)}
-                      disabled={loading}>
-                      <View className="flex-row items-center gap-2">
-                        <Sparkles color="white" size={24} />
-                        <Text className="text-lg font-bold text-white">Generate Script</Text>
-                      </View>
-                    </TouchableOpacity>
-
-                    {script && (
-                      <>
-                        <TouchableOpacity
-                          className="items-center justify-center rounded-xl border-2 border-[#10a37f] p-4"
-                          onPress={() => generateScript(true)}
-                          disabled={loading}>
-                          <View className="flex-row items-center gap-2">
-                            <RefreshCw size={24} color="#10a37f" />
-                            <Text className="text-lg font-bold text-[#10a37f]">Regenerate</Text>
-                          </View>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          className="mb-2 items-center justify-center rounded-xl border-2 border-red-500 p-4"
-                          onPress={() => {
-                            setScript('');
-                            Toast.success('Script cleared');
-                          }}
-                          disabled={loading}>
-                          <View className="flex-row items-center gap-2">
-                            <Trash2 size={24} color="#ef4444" />
-                            <Text className="text-lg font-bold text-red-500">Clear Script</Text>
-                          </View>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </>
-                )}
-              </View>
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <Text className="rounded-lg bg-red-500/10 p-2 text-center text-red-500">{error}</Text>
-            )}
-
-            {/* Generated Script */}
-            {script && (
-              <View className="mb-8 gap-4 rounded-xl border-2 border-gray-600 bg-transparent p-4">
-                {/* Script Header */}
-                <View className="mb-4 border-b border-gray-600 pb-4">
-                  <View className="flex-row items-center gap-2">
-                    <Video size={24} color={CONFIG.COLORS.primary} />
-                    <Text className="text-2xl font-bold text-white">Your YouTube Script</Text>
-                  </View>
-                  <View className="mt-2 flex-row items-center gap-2">
-                    <Tag size={16} color={CONFIG.COLORS.text.secondary} />
-                    <Text className="text-gray-400">Topic: {topic}</Text>
-                  </View>
-                </View>
-
-                {/* Action Buttons */}
-                <View className="mb-4 flex-row gap-2">
-                  <TouchableOpacity
-                    onPress={handleCopyToClipboard}
-                    className="flex-1 flex-row items-center justify-center rounded-xl border border-[#10a37f]/30 bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30"
-                    accessibilityLabel="Copy">
-                    <Copy size={20} color={CONFIG.COLORS.primary} />
-                    <Text className="ml-2 font-bold text-[#10a37f]">Copy Script</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleFileShare}
-                    className="flex-1 flex-row items-center justify-center rounded-xl border border-[#10a37f]/30 bg-[#10a37f]/20 p-4 active:bg-[#10a37f]/30"
-                    accessibilityLabel="Share">
-                    <Share2 size={20} color={CONFIG.COLORS.primary} />
-                    <Text className="ml-2 font-bold text-[#10a37f]">Share Script</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <MarkdownContent content={script} />
-              </View>
-            )}
+              </ScrollView>
+            </View>
           </View>
-        </ScrollView>
+        </Modal>
+
+        {/* Loading State */}
+        {loading && (
+          <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-[#343541]/90">
+            <View className="items-center p-6 rounded-2xl bg-[#444654] mx-4">
+              <ActivityIndicator size="large" color={CONFIG.COLORS.primary} />
+              <Text 
+                className="mt-4 text-center text-lg px-4" 
+                style={{ color: loadingMessages[loadingMessageIndex].color }}
+              >
+                {loadingMessages[loadingMessageIndex].text}
+              </Text>
+            </View>
+          </View>
+        )}
+
       </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 };
 
 export default MainPage;
-
