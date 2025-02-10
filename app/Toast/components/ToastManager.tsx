@@ -176,16 +176,22 @@ const ToastManager: React.FC<ToastManagerProps> = ({
 
   const pause = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    progressAnim.stopAnimation();
+    progressAnim?.stopAnimation();
   }, [progressAnim]);
 
   const resume = useCallback(() => {
-    const currentProgress = progressAnim.getValue();
-    const remainingDuration = toastDuration * currentProgress;
+    if (!isVisible) return;
+    const currentProgress = progressAnim._value;
+    const remainingDuration = toastDuration * (1 - currentProgress);
     
-    startProgressAnimation();
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: remainingDuration,
+      useNativeDriver: true,
+    }).start();
+    
     timeoutRef.current = setTimeout(hide, remainingDuration);
-  }, [toastDuration, progressAnim, hide]);
+  }, [toastDuration, progressAnim, hide, isVisible]);
 
   // Replace existing position calculation with more precise version
   const calculatePosition = (position: ToastPosition, screenHeight: number): number => {

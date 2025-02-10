@@ -3,28 +3,18 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
-import { useRouter } from 'expo-router';
 import { 
   Sparkles, 
-  Loader, 
-  Pencil, 
   Settings, 
-  ChevronDown, 
-  ChevronUp, 
   Lightbulb,
   X,
-  RefreshCw,
-  Trash2,
-  Video,
-  Tag,
   Copy,
   Share2,
-  Plus,
   Youtube,
   Film,
   Camera,
   Mic,
-  Menu
+  ChevronRight
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -37,19 +27,15 @@ import {
   Share,
   Platform,
   KeyboardAvoidingView,
-  Alert,
   SafeAreaView,
   RefreshControl,
   Modal
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { Toast } from '../Toast';
-
-
+import * as MediaLibrary from 'expo-media-library';
 
 import { useScriptStore } from '~/store/scriptStore';
-import { ensurePermissions } from '~/utils/permissions';
-import { usePermissions } from '~/hooks/usePermissions';
 
 // Environment configuration (should use actual environment variables in production)
 const CONFIG = {
@@ -117,99 +103,104 @@ const OptionSection = ({
 // Add new MarkdownContent component
 const MarkdownContent = ({ content }: { content: string }) => {
   return (
-    <View style={{ backgroundColor: '#444654' }}>
+    <View style={{ backgroundColor: CONFIG.COLORS.surface }}>
       <Markdown
         style={{
-          body: { color: '#ececf1' },
-          heading1: { color: '#ececf1', fontSize: 24, fontWeight: '600' },
-          heading2: { color: '#ececf1', fontSize: 20, fontWeight: '600' },
-          paragraph: { color: '#ececf1', fontSize: 16, lineHeight: 24 },
-          link: { color: '#10a37f' },
-          code_inline: { backgroundColor: '#343541', color: '#ececf1' },
-          code_block: { backgroundColor: '#343541', color: '#ececf1' },
-          blockquote: { backgroundColor: '#343541', borderLeftColor: '#10a37f' },
+          body: { color: CONFIG.COLORS.text.primary, fontSize: 15, lineHeight: 22 },
+          heading1: { 
+            color: CONFIG.COLORS.text.primary, 
+            fontSize: 22,
+            fontWeight: '700',
+            marginVertical: 12
+          },
+          heading2: { color: CONFIG.COLORS.text.primary, fontSize: 20, fontWeight: '600' },
+          paragraph: { color: CONFIG.COLORS.text.primary, fontSize: 16, lineHeight: 24 },
+          link: { color: CONFIG.COLORS.primary },
+          code_inline: { backgroundColor: CONFIG.COLORS.inputBg, color: CONFIG.COLORS.text.primary },
+          code_block: { backgroundColor: CONFIG.COLORS.inputBg, color: CONFIG.COLORS.text.primary },
+          blockquote: { backgroundColor: CONFIG.COLORS.inputBg, borderLeftColor: CONFIG.COLORS.primary },
           text: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           list_item: {
             marginVertical: 8,
             paddingLeft: 12,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           bullet_list_icon: {
             marginRight: 8,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           bullet_list_content: {
             flex: 1,
             borderLeftWidth: 2,
-            borderLeftColor: '#10a37f',
-            backgroundColor: '#343541',
+            borderLeftColor: CONFIG.COLORS.primary,
+            backgroundColor: CONFIG.COLORS.inputBg,
             padding: 12,
             borderRadius: 8,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
             marginLeft: 8,
           },
           em: {
-            color: '#10a37f',
+            color: CONFIG.COLORS.primary,
             fontStyle: 'normal',
             fontWeight: 'bold',
           },
           strong: {
-            color: '#ececf1',
-            backgroundColor: '#10a37f20',
+            color: CONFIG.COLORS.text.primary,
+            backgroundColor: CONFIG.COLORS.primary + '20',
             paddingHorizontal: 6,
             paddingVertical: 2,
             borderRadius: 4,
           },
           bullet_list: {
             marginVertical: 12,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           ordered_list: {
             marginVertical: 12,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           ordered_list_icon: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
             marginRight: 8,
           },
           ordered_list_content: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
             flex: 1,
           },
           list_item_text: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           text_list_content: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           list: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           listItem: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           listItemContent: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           listItemNumber: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           listItemBullet: {
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           fence: {
-            backgroundColor: '#343541',
+            backgroundColor: CONFIG.COLORS.inputBg,
             padding: 12,
             borderRadius: 8,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           pre: {
-            backgroundColor: '#343541',
+            backgroundColor: CONFIG.COLORS.inputBg,
             padding: 12,
             borderRadius: 8,
-            color: '#ececf1',
+            color: CONFIG.COLORS.text.primary,
           },
           text_container: {
             backgroundColor: 'transparent',
@@ -239,8 +230,7 @@ const MainPage = () => {
 
   const { isLoaded, isSignedIn } = useAuth();
 
-  // Move the hook to the component level
-  const { checkPermission } = usePermissions();
+  // Add state for controlling generation  };
 
   // Add state for controlling generation
   const [controller, setController] = React.useState<AbortController | null>(null);
@@ -368,15 +358,15 @@ const MainPage = () => {
       Toast.success('Script generated successfully!');
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        // Remove error state updates here since they're handled in stopGeneration()
-
+        // Add proper cleanup
+        setScript('Generation stopped by user');
+        setError('Generation stopped');
       } else {
         console.error('Generation error:', error);
         const errorMessage =
           error.message || 'Failed to generate script. Please check your connection and try again.';
         setError(errorMessage);
         Toast.error(errorMessage);
-
       }
     } finally {
       setLoading(false);
@@ -386,9 +376,9 @@ const MainPage = () => {
 
   const handleFileShare = async () => {
     try {
-      const hasStoragePermission = await checkPermission('STORAGE');
-      
-      if (!hasStoragePermission) {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.error('Storage permission required to share files');
         return;
       }
 
@@ -415,23 +405,6 @@ const MainPage = () => {
       Toast.error('Failed to copy script');
     }
 
-  };
-
-  const [isNetworkError, setIsNetworkError] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  // Add network error handling
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    try {
-      // Your network request here
-      setIsNetworkError(false);
-    } catch (error) {
-      Toast.error('Network error. Please check your connection.');
-      setIsNetworkError(true);
-    } finally {
-      setIsRetrying(false);
-    }
   };
 
   // Add refresh state
@@ -499,13 +472,13 @@ const MainPage = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
         
-        
-
         <ScrollView
-          className="flex-1 px-4"
-          contentContainerStyle={{ paddingBottom: 100 }}
+          className="flex-1 px-4 pt-4"
+          contentContainerStyle={{ 
+            paddingBottom: Platform.select({ ios: 100, android: 120 }) 
+          }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -515,40 +488,51 @@ const MainPage = () => {
             />
           }>
 
-          {/* Topic Suggestions */}
+          {/* Enhanced Topic Suggestions */}
           {!script && !loading && (
-            <View className="mt-6">
-              <View className="flex-row items-center gap-2 mb-4">
-                <Lightbulb size={20} color="#8e8ea0" />
-                <Text className="text-[#8e8ea0]">Try one of these topics:</Text>
+            <View className="mt-2 mb-6">
+              <View className="flex-row items-center gap-2 mb-4 px-1">
+                <Lightbulb size={22} color="#8e8ea0" />
+                <Text className="text-[#8e8ea0] text-base font-medium">Suggested Topics</Text>
               </View>
-              <View className="gap-2">
+              <View className="gap-3">
                 {topicSuggestions.map((suggestion, index) => (
                   <TouchableOpacity
                     key={index}
-                    className={`flex-row items-center gap-3 rounded-xl p-4 border ${suggestion.bg} ${suggestion.border}`}
+                    className={`flex-row items-center gap-3 rounded-xl p-3.5 border-2 ${suggestion.bg} ${suggestion.border}`}
                     onPress={() => setTopic(suggestion.text)}
                     activeOpacity={0.8}
                   >
-                    {suggestion.icon}
-                    <Text className="text-[#ececf1] text-base">{suggestion.text}</Text>
+                    <View className="p-1.5 bg-[#343541]/20 rounded-lg">
+                      {suggestion.icon}
+                    </View>
+                    <Text className="text-[#ececf1] text-base font-medium flex-1">
+                      {suggestion.text}
+                    </Text>
+                    <ChevronRight size={20} color="#8e8ea0" />
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Generated Script - Moved options to modal */}
+          {/* Improved Script Container */}
           {script && (
-            <View className="mb-4 rounded-xl bg-[#444654] p-4">
-              <View className="flex-row items-center justify-between pb-3">
-                <Text className="text-[#ececf1] text-lg font-semibold">Generated Script</Text>
-                <View className="flex-row gap-2">
-                  <TouchableOpacity onPress={handleCopyToClipboard}>
-                    <Copy size={20} color="#8e8ea0" />
+            <View className="mb-4 rounded-2xl bg-[#444654] p-4 border border-[#565869]/50">
+              <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#565869]/30">
+                <Text className="text-[#ececf1] text-lg font-bold">Generated Script</Text>
+                <View className="flex-row gap-3">
+                  <TouchableOpacity 
+                    className="p-1.5 active:opacity-70"
+                    onPress={handleCopyToClipboard}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Copy size={22} color="#8e8ea0" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleFileShare}>
-                    <Share2 size={20} color="#8e8ea0" />
+                  <TouchableOpacity 
+                    className="p-1.5 active:opacity-70"
+                    onPress={handleFileShare}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Share2 size={22} color="#8e8ea0" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -559,28 +543,35 @@ const MainPage = () => {
         </ScrollView>
 
         {/* Enhanced Input Bottom Bar */}
-        <View className="absolute bottom-0 w-full border-t border-[#565869] bg-[#343541] px-4 py-3">
-          <View className="flex-row items-center gap-2">
+        <View className="w-full border-t border-[#565869]/50 bg-[#343541] px-4 py-2.5">
+          <View className="flex-row items-center gap-3">
             <TouchableOpacity 
-              className="p-2"
-              onPress={() => setShowOptions(!showOptions)}>
-              <Plus size={24} color="#8e8ea0" />
+              className="p-2 active:opacity-70"
+              onPress={() => setShowOptions(!showOptions)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Settings size={24} color="#8e8ea0" />
             </TouchableOpacity>
             
             <TextInput
-              placeholder="Enter your topic here..."
+              placeholder="Enter your video topic..."
               placeholderTextColor="#8e8ea0"
               value={topic}
               onChangeText={setTopic}
-              className="flex-1 rounded-xl bg-[#40414f] px-4 py-3 text-[#ececf1]"
+              className="flex-1 rounded-xl bg-[#40414f] px-4 py-3 text-[#ececf1] text-base"
+              style={{ 
+                borderWidth: 1,
+                borderColor: topic ? '#10a37f/30' : '#565869/30',
+                includeFontPadding: false
+              }}
             />
             
             <TouchableOpacity
-              className="rounded-xl bg-[#10a37f] p-3"
+              className={`rounded-xl p-3 ${loading ? 'bg-[#10a37f]/80' : 'bg-[#10a37f]'}`}
               onPress={() => generateScript(false)}
-              disabled={loading}>
+              disabled={loading}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               {loading ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color="white" size="small" />
               ) : (
                 <Sparkles color="white" size={24} />
               )}
@@ -588,25 +579,29 @@ const MainPage = () => {
           </View>
         </View>
 
-        {/* Options Modal */}
+        {/* Improved Options Modal */}
         <Modal
           visible={showOptions}
           animationType="slide"
           transparent={true}
           onRequestClose={() => setShowOptions(false)}>
           <View className="flex-1 justify-end bg-black/50">
-            <View className="max-h-[70vh] rounded-t-2xl bg-[#40414f] p-4">
-              <View className="mb-4 flex-row items-center justify-between">
-                <Text className="text-lg font-bold text-[#ececf1]">Script Options</Text>
-                <TouchableOpacity onPress={() => setShowOptions(false)}>
-                  <X size={24} color="#8e8ea0" />
+            <View className="max-h-[75%] rounded-t-2xl bg-[#40414f] p-5 pt-4 border-t-4 border-[#10a37f]/20">
+              <View className="mb-4 flex-row items-center justify-between border-b border-[#565869]/30 pb-3">
+                <Text className="text-xl font-bold text-[#ececf1]">Script Settings</Text>
+                <TouchableOpacity 
+                  className="p-1 active:opacity-70"
+                  onPress={() => setShowOptions(false)}>
+                  <X size={26} color="#8e8ea0" />
                 </TouchableOpacity>
               </View>
-              <ScrollView>
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}>
                 {Object.entries(scriptOptions).map(([key, option]) => (
                   <OptionSection
                     key={key}
-                    title={key.toUpperCase()}
+                    title={key.charAt(0).toUpperCase() + key.slice(1)}
                     options={option.options}
                     selectedValue={option.value}
                     onSelect={(val) => updateScriptOption(key, val)}
@@ -617,17 +612,25 @@ const MainPage = () => {
           </View>
         </Modal>
 
-        {/* Loading State */}
+        {/* Enhanced Loading Overlay */}
         {loading && (
-          <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-[#343541]/90">
-            <View className="items-center p-6 rounded-2xl bg-[#444654] mx-4">
-              <ActivityIndicator size="large" color={CONFIG.COLORS.primary} />
+          <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-[#343541]/95">
+            <View className="items-center p-6 rounded-2xl bg-[#444654] mx-4 border border-[#565869]/50">
+              <ActivityIndicator 
+                size="large" 
+                color={CONFIG.COLORS.primary} 
+                style={{ transform: [{ scale: 1.2 }] }}
+              />
               <Text 
-                className="mt-4 text-center text-lg px-4" 
-                style={{ color: loadingMessages[loadingMessageIndex].color }}
-              >
+                className="mt-4 text-center text-lg font-medium px-4 max-w-[80%]"
+                style={{ color: loadingMessages[loadingMessageIndex].color }}>
                 {loadingMessages[loadingMessageIndex].text}
               </Text>
+              <TouchableOpacity
+                className="mt-4 px-6 py-2 rounded-full bg-[#10a37f]/20"
+                onPress={stopGeneration}>
+                <Text className="text-[#10a37f] text-sm font-medium">Cancel Generation</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}

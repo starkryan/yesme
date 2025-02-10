@@ -17,8 +17,14 @@
         {
           "backgroundColor": "#343541",
           "image": "./assets/splash.png",
-          "resizeMode": "contain",
           "imageResizeMode": "contain"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos for sharing scripts.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save generated scripts."
         }
       ]
     ],
@@ -44,8 +50,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#343541",
-        "monochromeImage": "./assets/adaptive-icon.png"
+        "backgroundColor": "#343541"
       },
       "icon": "./assets/icon.png",
       "splash": {
@@ -53,34 +58,6 @@
         "resizeMode": "contain",
         "image": "./assets/splash.png"
       },
-      "permissions": [
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA",
-        "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED",
-        "POST_NOTIFICATIONS",
-        "SYSTEM_ALERT_WINDOW",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "NETWORK_STATE",
-        "READ_PHONE_STATE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA",
-        "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED",
-        "POST_NOTIFICATIONS",
-        "SYSTEM_ALERT_WINDOW",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "NETWORK_STATE",
-        "READ_PHONE_STATE"
-      ],
       "package": "com.lemi.app",
       "versionCode": 1
     },
